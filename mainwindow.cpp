@@ -300,6 +300,7 @@ RoomList DrawLabirint(MapObjAlgList objList, int count)
 
   qDebug() << "\r\n\r\n-------------------------------------\r\n\r\n" << result;
 
+  return result;
 }
 
 
@@ -362,7 +363,9 @@ void TestTwo()
   
   for (int i = min; i < max; i++)
   {
+    qDebug() << "BeforeDraw";
     DrawLabirint(GetList(), i);
+    qDebug() << "AfterDraw";
   }
 }
 
