@@ -251,6 +251,33 @@ Directions GetFreeExits(Room room, const RoomList list)
   return result;
 }
 
+Directions GetNeighborExits(Room room, const RoomList list)
+{
+  RoomList::const_iterator it;
+//  const RoomList::iterator left = list.end(), right = list.end(), down = list.end(), up = list.end();
+  Directions result = room.exits;
+  
+//  qDebug() << "StartFreeExits: " << result;
+  
+  for (it = list.begin(); it != list.end(); it++)
+  {
+    const Room &curRoom = *it;
+    if (curRoom.exits & DIR_DOWN && curRoom.x == room.x && (curRoom.y-1) == room.y) result = (Directions)(result & ~DIR_UP);
+    if (curRoom.exits & DIR_UP && curRoom.x == room.x && (curRoom.y+1) == room.y) result = (Directions)(result & ~DIR_DOWN);
+    if (curRoom.exits & DIR_RIGHT && (curRoom.x+1) == room.x && curRoom.y == room.y) result = (Directions)(result & ~DIR_LEFT);
+    if (curRoom.exits & DIR_LEFT && (curRoom.x-1) == room.x && curRoom.y == room.y) result = (Directions)(result & ~DIR_RIGHT);
+//    qDebug() << "UP:" << (room.exits & DIR_UP) << (curRoom.x == room.x) << ((curRoom.y-1) == room.y) << (room.exits & DIR_UP && curRoom.x == room.x && (curRoom.y-1) == room.y);
+//    qDebug() << "DOWN:" << (room.exits & DIR_DOWN) << (curRoom.x == room.x) << ((curRoom.y+1) == room.y) << (room.exits & DIR_DOWN && curRoom.x == room.x && (curRoom.y+1) == room.y);
+//    qDebug() << "LEFT:" << (room.exits & DIR_LEFT) << ((curRoom.x+1) == room.x) << (curRoom.y == room.y) << (room.exits & DIR_LEFT && (curRoom.x+1) == room.x && curRoom.y == room.y);
+//    qDebug() << "RIGHT:" << (room.exits & DIR_RIGHT) << ((curRoom.x-1) == room.x) << (curRoom.y == room.y) << (room.exits & DIR_RIGHT && (curRoom.x-1) == room.x && curRoom.y == room.y);
+//    qDebug() << curRoom << result;
+  }
+  
+//  qDebug() << "EndFreeExits: " << result;
+  
+  return result;
+}
+
 RoomList DrawLabirint(MapObjAlgList objList, int count)
 {
   RoomList result;
@@ -282,7 +309,7 @@ RoomList DrawLabirint(MapObjAlgList objList, int count)
   
       newRoom = FillNextRoomCoordinate(oldRoom, GetFreeExits(oldRoom, result));
       newRoom.roomType = 3; //Пока все будут ситуациями рандом позже.
-      newRoom.exits = GetRandomExits(GetRandomExitCount(result.count(), count), newRoom.exits);
+      newRoom.exits = GetRandomExits(GetRandomExitCount(result.count(), count), (Directions)(newRoom.exits | GetNeighborExits(newRoom, result)));
     
       qDebug() << "Two:" << newRoom;
     
@@ -309,6 +336,8 @@ MainWindow::MainWindow(QWidget *parent) :
   ui(new Ui::MainWindow)
 {
   ui->setupUi(this);
+  ui->graphicsView->setScene(new QGraphicsScene);
+  ui->graphicsView->setSceneRect(0, 0, 0, 0);
 }
 
 MainWindow::~MainWindow()
@@ -358,8 +387,8 @@ void TestOne()
 
 void TestTwo()
 {
-  int min = 1;
-  int max = 10;
+  int min = 100;
+  int max = 101;
   
   for (int i = min; i < max; i++)
   {
@@ -401,5 +430,45 @@ void TestThree()
 
 void MainWindow::on_pushButton_clicked()
 {
-  TestTwo();
+  TestFour();
+}
+
+void MainWindow::TestFour()
+{
+  int roomCount = ui->leCount->text().toInt();
+  int minX = 0;
+  int minY = 0;
+  int maxX = 0;
+  int maxY = 0;
+
+  qDebug() << "BeforeDraw";
+  RoomList result = DrawLabirint(GetList(), roomCount);
+  qDebug() << "AfterDraw";
+  
+  ui->graphicsView->scene()->clear();
+  
+  RoomList::const_iterator it;
+  
+  for (it = result.begin(); it != result.end(); it++)
+  {
+    const Room &room = *it;
+    const int lminx = room.x * 20, lminy = room.y * 20, lmaxx = (room.x+1) * 20, lmaxy = (room.y+1) * 20;
+    ui->graphicsView->scene()->addRect(lminx + 5, lminy + 5, 10, 10, QPen(), QBrush(Qt::yellow));
+    minX = qMin(minX, lminx);
+    minY = qMin(minY, lminy);
+    maxX = qMax(maxX, lmaxx);
+    maxY = qMax(maxY, lmaxy);
+    
+    if (room.exits & DIR_LEFT) ui->graphicsView->scene()->addLine(lminx, lminy + 10, lminx + 5, lminy + 10);
+    if (room.exits & DIR_DOWN) ui->graphicsView->scene()->addLine(lminx + 10, lminy, lminx + 10, lminy + 5);
+    if (room.exits & DIR_UP) ui->graphicsView->scene()->addLine(lminx + 10, lminy + 20, lminx + 10, lminy + 15);
+    if (room.exits & DIR_RIGHT) ui->graphicsView->scene()->addLine(lminx + 20, lminy + 10, lminx + 15, lminy + 10);
+    
+//    qDebug() << "minX:" << minX << "minY:" << minY << "maxX" << maxX << "maxY" << maxY;
+  }
+  
+//  qDebug() << "minX:" << minX << "minY:" << minY << "maxX" << maxX << "maxY" << maxY;
+  
+  ui->graphicsView->fitInView(minX, minY, maxX - minX, maxY - minY, Qt::KeepAspectRatio);
+  ui->graphicsView->fitInView(minX, minY, maxX - minX, maxY - minY, Qt::KeepAspectRatio);
 }
