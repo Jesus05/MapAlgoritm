@@ -6,6 +6,7 @@
 #include "Types.h"
 #include <stdlib.h>
 #include <QStack>
+#include <qlogging.h>
 
 MapObjectStruct ObjectList[] = {
   { 0, "Enter"     , 0, 100, {0, -1}   , {2, 0, -1}},
@@ -105,7 +106,7 @@ int GetRandomExitCount(int havingRooms, int needRooms, int HavingExit = 1)
   //TODO поиграться с формулами зависимости отсавшихся комнат и рандома.
   int result = max - (int)((double)(max - min + 1) * resultPos);
   
-  qDebug() << "RandomExitCount:" << havingRooms << needRooms << resultPos << randPos << roomPos << (double)(max - min + 1) * resultPos << (int)((double)(max - min + 1) * resultPos) << result;
+//  qDebug() << "RandomExitCount:" << havingRooms << needRooms << resultPos << randPos << roomPos << (double)(max - min + 1) * resultPos << (int)((double)(max - min + 1) * resultPos) << result;
   
   return result;
 }
@@ -166,11 +167,11 @@ Directions SelectRandDirection(Directions having)
 
 Directions GetRandomExits(int exitCount, Directions having)
 {
-  qDebug() << "having" << having;
+//  qDebug() << "having" << having;
 
   if (ExitCount(having) >= exitCount) //Если все ходы уже есть то возвращаем все ходы.
   {
-    qDebug() << "GetRandomExit";
+//    qDebug() << "GetRandomExit";
     return having;
   }
   
@@ -199,13 +200,13 @@ Directions GetRandomExits(int exitCount, Directions having)
   #undef ADD_DIR
   
   Directions result = having;
-  qDebug() << "result" << result;
+//  qDebug() << "result" << result;
   
   while (ExitCount(result) < exitCount)
   {
     randomIndex = GetRandom(0, 3);
     if (qrand() % 2) result = (Directions)(result | randomExits[randomIndex]);
-    qDebug() << "result loop" << result << randomIndex << randomExits[randomIndex];
+//    qDebug() << "result loop" << result << randomIndex << randomExits[randomIndex];
   }
   
   return result;
@@ -251,7 +252,7 @@ Directions GetFreeExits(Room room, const RoomList list)
   return result;
 }
 
-Directions GetNeighborExits(Room room, const RoomList list)
+Directions GetNeighborExits(Room room, const RoomList &list)
 {
   RoomList::const_iterator it;
 //  const RoomList::iterator left = list.end(), right = list.end(), down = list.end(), up = list.end();
@@ -278,6 +279,19 @@ Directions GetNeighborExits(Room room, const RoomList list)
   return result;
 }
 
+bool IsFreePlace(Room room, const RoomList &list)
+{
+  RoomList::const_iterator it;
+  
+  for (it = list.begin(); it != list.end(); it++)
+  {
+    const Room &curRoom = *it;
+    if (curRoom.x == room.x && curRoom.y == room.y) return false;
+  }
+  
+  return true;
+}
+
 RoomList DrawLabirint(MapObjAlgList objList, int count)
 {
   RoomList result;
@@ -289,7 +303,7 @@ RoomList DrawLabirint(MapObjAlgList objList, int count)
   newRoom.roomType = 0; //Вход всегда первый.
   newRoom.exits = GetRandomExits(GetRandomExitCount(0, count), DIR_NO);
   
-  qDebug() << "One:" << newRoom;
+//  qDebug() << "One:" << newRoom;
   
   result.push_back(newRoom);
   
@@ -301,8 +315,12 @@ RoomList DrawLabirint(MapObjAlgList objList, int count)
     Room oldRoom = unfinishedRooms.pop();
   
     Directions oldFreeExist = GetFreeExits(oldRoom, result);
-  
-    qDebug() << "st" << oldFreeExist << (int)oldFreeExist;
+    
+    if (oldFreeExist & ~DIR_ALL) 
+    {
+      qDebug() << "st" << oldFreeExist << (int)oldFreeExist;
+      qFatal("stFatal");
+    }
   
     if (oldFreeExist != DIR_NO)
     {
@@ -311,21 +329,23 @@ RoomList DrawLabirint(MapObjAlgList objList, int count)
       newRoom.roomType = 3; //Пока все будут ситуациями рандом позже.
       newRoom.exits = GetRandomExits(GetRandomExitCount(result.count(), count), (Directions)(newRoom.exits | GetNeighborExits(newRoom, result)));
     
-      qDebug() << "Two:" << newRoom;
+//      qDebug() << "Two:" << newRoom;
     
-      result.push_back(newRoom);
-    
-      oldFreeExist = GetFreeExits(oldRoom, result);
-    
-      qDebug() << "en" << oldFreeExist << (int)oldFreeExist;
-      if (oldFreeExist != DIR_NO) unfinishedRooms.push(oldRoom);
-      if (GetFreeExits(newRoom, result) != DIR_NO) unfinishedRooms.push(newRoom);
+      if (IsFreePlace(newRoom, result))
+      {
+        result.push_back(newRoom);
+        if (GetFreeExits(newRoom, result) != DIR_NO) unfinishedRooms.push(newRoom);
+      }
       
+      oldFreeExist = GetFreeExits(oldRoom, result);
+//      qDebug() << "en" << oldFreeExist << (int)oldFreeExist;
+      if (oldFreeExist & ~DIR_ALL) qFatal("enFatal");
+      if (oldFreeExist != DIR_NO) unfinishedRooms.push(oldRoom);
     }
     qDebug() << "UnfinishedCount" << unfinishedRooms.count() << "result count" << result.count(); 
   }
 
-  qDebug() << "\r\n\r\n-------------------------------------\r\n\r\n" << result;
+//  qDebug() << "\r\n\r\n-------------------------------------\r\n\r\n" << result;
 
   return result;
 }
@@ -338,6 +358,10 @@ MainWindow::MainWindow(QWidget *parent) :
   ui->setupUi(this);
   ui->graphicsView->setScene(new QGraphicsScene);
   ui->graphicsView->setSceneRect(0, 0, 0, 0);
+  m_minX = 0;
+  m_minY = 0;
+  m_maxX = 1;
+  m_maxY = 1;
 }
 
 MainWindow::~MainWindow()
@@ -433,31 +457,41 @@ void MainWindow::on_pushButton_clicked()
   TestFour();
 }
 
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+  QMainWindow::resizeEvent(event);
+//  if (ui->graphicsView->scene() != NULL)
+  {
+    ui->graphicsView->fitInView(m_minX, m_minY, m_maxX - m_minX, m_maxY - m_minY, Qt::KeepAspectRatio);
+    ui->graphicsView->fitInView(m_minX, m_minY, m_maxX - m_minX, m_maxY - m_minY, Qt::KeepAspectRatio);
+  }
+}
+
 void MainWindow::TestFour()
 {
   int roomCount = ui->leCount->text().toInt();
-  int minX = 0;
-  int minY = 0;
-  int maxX = 0;
-  int maxY = 0;
+  m_minX = 0;
+  m_minY = 0;
+  m_maxX = 0;
+  m_maxY = 0;
 
   qDebug() << "BeforeDraw";
-  RoomList result = DrawLabirint(GetList(), roomCount);
-  qDebug() << "AfterDraw";
+  RoomList rooms = DrawLabirint(GetList(), roomCount);
+  qDebug() << "AfterDraw" << "room count" << rooms.count();
   
   ui->graphicsView->scene()->clear();
   
   RoomList::const_iterator it;
   
-  for (it = result.begin(); it != result.end(); it++)
+  for (it = rooms.begin(); it != rooms.end(); it++)
   {
     const Room &room = *it;
     const int lminx = room.x * 20, lminy = room.y * 20, lmaxx = (room.x+1) * 20, lmaxy = (room.y+1) * 20;
-    ui->graphicsView->scene()->addRect(lminx + 5, lminy + 5, 10, 10, QPen(), QBrush(Qt::yellow));
-    minX = qMin(minX, lminx);
-    minY = qMin(minY, lminy);
-    maxX = qMax(maxX, lmaxx);
-    maxY = qMax(maxY, lmaxy);
+    ui->graphicsView->scene()->addRect(lminx + 5, lminy + 5, 10, 10, QPen(), QBrush(room.roomType == 0 ? Qt::blue : Qt::yellow));
+    m_minX = qMin(m_minX, lminx);
+    m_minY = qMin(m_minY, lminy);
+    m_maxX = qMax(m_maxX, lmaxx);
+    m_maxY = qMax(m_maxY, lmaxy);
     
     if (room.exits & DIR_LEFT) ui->graphicsView->scene()->addLine(lminx, lminy + 10, lminx + 5, lminy + 10);
     if (room.exits & DIR_DOWN) ui->graphicsView->scene()->addLine(lminx + 10, lminy, lminx + 10, lminy + 5);
@@ -469,6 +503,6 @@ void MainWindow::TestFour()
   
 //  qDebug() << "minX:" << minX << "minY:" << minY << "maxX" << maxX << "maxY" << maxY;
   
-  ui->graphicsView->fitInView(minX, minY, maxX - minX, maxY - minY, Qt::KeepAspectRatio);
-  ui->graphicsView->fitInView(minX, minY, maxX - minX, maxY - minY, Qt::KeepAspectRatio);
+  ui->graphicsView->fitInView(m_minX, m_minY, m_maxX - m_minX, m_maxY - m_minY, Qt::KeepAspectRatio);
+  ui->graphicsView->fitInView(m_minX, m_minY, m_maxX - m_minX, m_maxY - m_minY, Qt::KeepAspectRatio);
 }

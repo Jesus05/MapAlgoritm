@@ -47,7 +47,7 @@ QDebug operator<<(QDebug debug, const Directions &obj)
   (obj & DIR_DOWN) ? debug << "DOWN" : debug;
   (obj & DIR_LEFT) ? debug << "LEFT" : debug;
   (obj & DIR_RIGHT) ? debug << "RIGHT" : debug;
-  debug << (int)obj;
+  debug << " value: " << (int)obj;
   debug << ("]");
   debug.setAutoInsertSpaces(oldSetting);
   return debug.maybeSpace();

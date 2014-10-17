@@ -17,9 +17,14 @@ public:
   
 private slots:
   void on_pushButton_clicked();
+  void resizeEvent(QResizeEvent *event);
   
 private:
   Ui::MainWindow *ui;
+  int m_minX;
+  int m_minY;
+  int m_maxX;
+  int m_maxY;
   void TestFour();
 };
 
