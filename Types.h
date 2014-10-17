@@ -1,0 +1,64 @@
+#ifndef TYPES_H
+#define TYPES_H
+
+typedef int Tag;
+
+typedef int EndArray[256];
+
+struct MapObjectStruct
+{
+  Tag tag;
+  char name[256];
+  int minHardness;
+  int maxHardness;
+  EndArray allowList;
+  EndArray rejectList;
+};
+
+struct MapObjectForAlg : public MapObjectStruct
+{
+  MapObjectForAlg operator =(MapObjectStruct other)
+  {
+    tag = other.tag;
+    memcpy(name, other.name, sizeof(other.name));
+    minHardness = other.minHardness;
+    maxHardness = other.maxHardness;
+    memcpy((int*)allowList, (int*)other.allowList, sizeof(other.allowList));
+    memcpy((int*)rejectList, (int*)other.rejectList, sizeof(other.rejectList));
+    return *this;
+  }
+
+  int chance;
+  int minCount;
+  int maxCount;
+};
+
+enum Directions
+{
+  DIR_NO = 0, 
+  DIR_UP = 1, 
+  DIR_DOWN = 2, 
+  DIR_LEFT = 4, 
+  DIR_RIGHT = 8, 
+  DIR_UP_AND_RIGHT = DIR_UP | DIR_RIGHT, 
+  DIR_UP_AND_DOWN = DIR_UP | DIR_DOWN, 
+  DIR_UP_AND_LEFT = DIR_UP | DIR_LEFT,
+  DIR_DOWN_AND_RIGHT = DIR_DOWN | DIR_RIGHT,
+  DIR_DOWN_AND_LEFT = DIR_DOWN | DIR_LEFT,
+  DIR_DOWN_AND_UP = DIR_DOWN | DIR_UP,
+  DIR_ALL = DIR_DOWN | DIR_UP | DIR_LEFT | DIR_RIGHT
+};
+
+struct Pointer
+{
+  int x;
+  int y;
+};
+
+struct Room : public Pointer
+{
+  Directions exits;
+  Tag roomType;
+};
+
+#endif // TYPES_H
