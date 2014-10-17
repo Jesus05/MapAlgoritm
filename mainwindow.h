@@ -2,10 +2,13 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QList>
 
 namespace Ui {
 class MainWindow;
 }
+
+typedef QList<class Room> RoomList;
 
 class MainWindow : public QMainWindow
 {
@@ -14,10 +17,13 @@ class MainWindow : public QMainWindow
 public:
   explicit MainWindow(QWidget *parent = 0);
   ~MainWindow();
+  void DrawRooms(RoomList &rooms);
   
 private slots:
   void on_pushButton_clicked();
   void resizeEvent(QResizeEvent *event);
+  
+  void on_pushButton_2_clicked();
   
 private:
   Ui::MainWindow *ui;
@@ -26,6 +32,7 @@ private:
   int m_maxX;
   int m_maxY;
   void TestFour();
+
 };
 
 #endif // MAINWINDOW_H

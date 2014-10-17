@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include <QStack>
 #include <qlogging.h>
+#include <QMessageBox>
+
+MainWindow *debugPointer;
 
 MapObjectStruct ObjectList[] = {
   { 0, "Enter"     , 0, 100, {0, -1}   , {2, 0, -1}},
@@ -75,8 +78,6 @@ MapObjAlgList GetList()
   
   return result;
 }
-
-typedef QList<Room> RoomList;
 
 int GetRandom(int min, int max)
 {
@@ -258,23 +259,50 @@ Directions GetNeighborExits(Room room, const RoomList &list)
 //  const RoomList::iterator left = list.end(), right = list.end(), down = list.end(), up = list.end();
   Directions result = room.exits;
   
-//  qDebug() << "StartFreeExits: " << result;
+//  qDebug() << "GetNeighborExits: " << result;
   
   for (it = list.begin(); it != list.end(); it++)
   {
     const Room &curRoom = *it;
-    if (curRoom.exits & DIR_DOWN && curRoom.x == room.x && (curRoom.y-1) == room.y) result = (Directions)(result & ~DIR_UP);
-    if (curRoom.exits & DIR_UP && curRoom.x == room.x && (curRoom.y+1) == room.y) result = (Directions)(result & ~DIR_DOWN);
-    if (curRoom.exits & DIR_RIGHT && (curRoom.x+1) == room.x && curRoom.y == room.y) result = (Directions)(result & ~DIR_LEFT);
-    if (curRoom.exits & DIR_LEFT && (curRoom.x-1) == room.x && curRoom.y == room.y) result = (Directions)(result & ~DIR_RIGHT);
-//    qDebug() << "UP:" << (room.exits & DIR_UP) << (curRoom.x == room.x) << ((curRoom.y-1) == room.y) << (room.exits & DIR_UP && curRoom.x == room.x && (curRoom.y-1) == room.y);
-//    qDebug() << "DOWN:" << (room.exits & DIR_DOWN) << (curRoom.x == room.x) << ((curRoom.y+1) == room.y) << (room.exits & DIR_DOWN && curRoom.x == room.x && (curRoom.y+1) == room.y);
-//    qDebug() << "LEFT:" << (room.exits & DIR_LEFT) << ((curRoom.x+1) == room.x) << (curRoom.y == room.y) << (room.exits & DIR_LEFT && (curRoom.x+1) == room.x && curRoom.y == room.y);
-//    qDebug() << "RIGHT:" << (room.exits & DIR_RIGHT) << ((curRoom.x-1) == room.x) << (curRoom.y == room.y) << (room.exits & DIR_RIGHT && (curRoom.x-1) == room.x && curRoom.y == room.y);
+    if (curRoom.exits & DIR_DOWN && curRoom.x == room.x && (curRoom.y-1) == room.y) result = (Directions)(result | DIR_UP);
+    if (curRoom.exits & DIR_UP && curRoom.x == room.x && (curRoom.y+1) == room.y) result = (Directions)(result | DIR_DOWN);
+    if (curRoom.exits & DIR_RIGHT && (curRoom.x+1) == room.x && curRoom.y == room.y) result = (Directions)(result | DIR_LEFT);
+    if (curRoom.exits & DIR_LEFT && (curRoom.x-1) == room.x && curRoom.y == room.y) result = (Directions)(result | DIR_RIGHT);
+//    qDebug() << "UP:" << (curRoom.exits & DIR_DOWN) << (curRoom.x == room.x) << ((curRoom.y-1) == room.y) << (curRoom.exits & DIR_DOWN && curRoom.x == room.x && (curRoom.y-1) == room.y);
+//    qDebug() << "DOWN:" << (curRoom.exits & DIR_UP) << (curRoom.x == room.x) << ((curRoom.y+1) == room.y) << (curRoom.exits & DIR_UP && curRoom.x == room.x && (curRoom.y+1) == room.y);
+//    qDebug() << "LEFT:" << (curRoom.exits & DIR_RIGHT) << ((curRoom.x+1) == room.x) << (curRoom.y == room.y) << (curRoom.exits & DIR_RIGHT && (curRoom.x+1) == room.x && curRoom.y == room.y);
+//    qDebug() << "RIGHT:" << (curRoom.exits & DIR_LEFT) << ((curRoom.x-1) == room.x) << (curRoom.y == room.y) << (curRoom.exits & DIR_LEFT && (curRoom.x-1) == room.x && curRoom.y == room.y);
 //    qDebug() << curRoom << result;
   }
   
-//  qDebug() << "EndFreeExits: " << result;
+//  qDebug() << "GetNeighborExits: " << result;
+  
+  return result;
+}
+
+Directions GetRejectNeighborNoExits(Room room, const RoomList &list)
+{
+  RoomList::const_iterator it;
+//  const RoomList::iterator left = list.end(), right = list.end(), down = list.end(), up = list.end();
+  Directions result = room.exits;
+  
+//  qDebug() << "GetNeighborRejectExits: " << result;
+  
+  for (it = list.begin(); it != list.end(); it++)
+  {
+    const Room &curRoom = *it;
+    if ((curRoom.exits & DIR_DOWN) == 0 && curRoom.x == room.x && (curRoom.y-1) == room.y) result = (Directions)(result & ~DIR_UP);
+    if ((curRoom.exits & DIR_UP) == 0 && curRoom.x == room.x && (curRoom.y+1) == room.y) result = (Directions)(result & ~DIR_DOWN);
+    if ((curRoom.exits & DIR_RIGHT) == 0 && (curRoom.x+1) == room.x && curRoom.y == room.y) result = (Directions)(result & ~DIR_LEFT);
+    if ((curRoom.exits & DIR_LEFT) == 0 && (curRoom.x-1) == room.x && curRoom.y == room.y) result = (Directions)(result & ~DIR_RIGHT);
+//    qDebug() << "UP:" << ((curRoom.exits & DIR_DOWN) == 0 && curRoom.x == room.x && (curRoom.y-1) == room.y) << ((curRoom.exits & DIR_DOWN) == 0 && curRoom.x == room.x && (curRoom.y-1) == room.y);
+//    qDebug() << "DOWN:" << ((curRoom.exits & DIR_UP) == 0 && curRoom.x == room.x && (curRoom.y+1) == room.y) << ((curRoom.exits & DIR_UP) == 0 && curRoom.x == room.x && (curRoom.y+1) == room.y);
+//    qDebug() << "LEFT:" << ((curRoom.exits & DIR_RIGHT) == 0 && (curRoom.x+1) == room.x && curRoom.y == room.y) << ((curRoom.exits & DIR_RIGHT) == 0 && (curRoom.x+1) == room.x && curRoom.y == room.y);
+//    qDebug() << "RIGHT:" << ((curRoom.exits & DIR_LEFT) == 0 && (curRoom.x-1) == room.x && curRoom.y == room.y) << ((curRoom.exits & DIR_LEFT) == 0 && (curRoom.x-1) == room.x && curRoom.y == room.y);
+//    qDebug() << curRoom << result;
+  }
+  
+//  qDebug() << "GetNeighborRejectExits: " << result;
   
   return result;
 }
@@ -324,22 +352,30 @@ RoomList DrawLabirint(MapObjAlgList objList, int count)
   
     if (oldFreeExist != DIR_NO)
     {
-  
       newRoom = FillNextRoomCoordinate(oldRoom, GetFreeExits(oldRoom, result));
       newRoom.roomType = 3; //Пока все будут ситуациями рандом позже.
+//      qDebug() << newRoom << "re" << newRoom.exits << "GNE" << GetNeighborExits(newRoom, result) << "GNRE" << GetRejectNeighborNoExits(newRoom, result);
       newRoom.exits = GetRandomExits(GetRandomExitCount(result.count(), count), (Directions)(newRoom.exits | GetNeighborExits(newRoom, result)));
-    
+      newRoom.exits = GetRejectNeighborNoExits(newRoom, result);
+//      qDebug() << "GNRE2" << GetRejectNeighborNoExits(newRoom, result);
 //      qDebug() << "Two:" << newRoom;
     
       if (IsFreePlace(newRoom, result))
       {
         result.push_back(newRoom);
         if (GetFreeExits(newRoom, result) != DIR_NO) unfinishedRooms.push(newRoom);
+//        qDebug() << "Accepted\r\n-------------------\r\n";
+//        debugPointer->DrawRooms(result);
+//        QMessageBox::information(0, "Accepted", "Accepted");
       }
       
       oldFreeExist = GetFreeExits(oldRoom, result);
 //      qDebug() << "en" << oldFreeExist << (int)oldFreeExist;
-      if (oldFreeExist & ~DIR_ALL) qFatal("enFatal");
+      if (oldFreeExist & ~DIR_ALL)
+      {
+        qFatal("enFatal");
+        qDebug() << "en" << oldFreeExist << (int)oldFreeExist;
+      }
       if (oldFreeExist != DIR_NO) unfinishedRooms.push(oldRoom);
     }
     qDebug() << "UnfinishedCount" << unfinishedRooms.count() << "result count" << result.count(); 
@@ -362,6 +398,7 @@ MainWindow::MainWindow(QWidget *parent) :
   m_minY = 0;
   m_maxX = 1;
   m_maxY = 1;
+  debugPointer = this;
 }
 
 MainWindow::~MainWindow()
@@ -389,10 +426,10 @@ void TestOne()
     
     int summ = up + down + left + right;
     
-    double upP = (double)up/summ;
-    double downP = (double)down/summ;
-    double leftP = (double)left/summ;
-    double rightP = (double)right/summ;
+//    double upP = (double)up/summ;
+//    double downP = (double)down/summ;
+//    double leftP = (double)left/summ;
+//    double rightP = (double)right/summ;
     
     qDebug() << DIR_UP << (double)up/summ << DIR_DOWN << (double)down/summ << DIR_LEFT << (double)left/summ << DIR_RIGHT << (double)right/summ;
   }
@@ -475,18 +512,30 @@ void MainWindow::TestFour()
   m_maxX = 0;
   m_maxY = 0;
 
+  int randSeed = ui->leSeed->text().toInt(); //qrand();
+  qDebug() << "randSeed" << randSeed;
+  qsrand(randSeed);
+
   qDebug() << "BeforeDraw";
   RoomList rooms = DrawLabirint(GetList(), roomCount);
   qDebug() << "AfterDraw" << "room count" << rooms.count();
   
+  DrawRooms(rooms);
+  
+  on_pushButton_2_clicked();
+}
+
+void MainWindow::DrawRooms(RoomList &rooms)
+{
   ui->graphicsView->scene()->clear();
+  ui->graphicsView->setSceneRect(0, 0, 0, 0);
   
   RoomList::const_iterator it;
   
   for (it = rooms.begin(); it != rooms.end(); it++)
   {
     const Room &room = *it;
-    const int lminx = room.x * 20, lminy = room.y * 20, lmaxx = (room.x+1) * 20, lmaxy = (room.y+1) * 20;
+    const int lminx = room.x * 20, lminy = -room.y * 20, lmaxx = (room.x+1) * 20, lmaxy = (-room.y+1) * 20;
     ui->graphicsView->scene()->addRect(lminx + 5, lminy + 5, 10, 10, QPen(), QBrush(room.roomType == 0 ? Qt::blue : Qt::yellow));
     m_minX = qMin(m_minX, lminx);
     m_minY = qMin(m_minY, lminy);
@@ -494,8 +543,8 @@ void MainWindow::TestFour()
     m_maxY = qMax(m_maxY, lmaxy);
     
     if (room.exits & DIR_LEFT) ui->graphicsView->scene()->addLine(lminx, lminy + 10, lminx + 5, lminy + 10);
-    if (room.exits & DIR_DOWN) ui->graphicsView->scene()->addLine(lminx + 10, lminy, lminx + 10, lminy + 5);
-    if (room.exits & DIR_UP) ui->graphicsView->scene()->addLine(lminx + 10, lminy + 20, lminx + 10, lminy + 15);
+    if (room.exits & DIR_UP) ui->graphicsView->scene()->addLine(lminx + 10, lminy, lminx + 10, lminy + 5);
+    if (room.exits & DIR_DOWN) ui->graphicsView->scene()->addLine(lminx + 10, lminy + 20, lminx + 10, lminy + 15);
     if (room.exits & DIR_RIGHT) ui->graphicsView->scene()->addLine(lminx + 20, lminy + 10, lminx + 15, lminy + 10);
     
 //    qDebug() << "minX:" << minX << "minY:" << minY << "maxX" << maxX << "maxY" << maxY;
@@ -505,4 +554,10 @@ void MainWindow::TestFour()
   
   ui->graphicsView->fitInView(m_minX, m_minY, m_maxX - m_minX, m_maxY - m_minY, Qt::KeepAspectRatio);
   ui->graphicsView->fitInView(m_minX, m_minY, m_maxX - m_minX, m_maxY - m_minY, Qt::KeepAspectRatio);
+}
+
+void MainWindow::on_pushButton_2_clicked()
+{
+  ui->pushButton_2->setText(QString("Generate seed. old seed:") + ui->leSeed->text());
+  ui->leSeed->setText(QString::number(qrand()));
 }

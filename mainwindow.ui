@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>858</width>
-    <height>584</height>
+    <width>274</width>
+    <height>315</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
@@ -19,19 +25,33 @@
      <widget class="QGraphicsView" name="graphicsView"/>
     </item>
     <item>
+     <widget class="QLineEdit" name="leSeed">
+      <property name="inputMethodHints">
+       <set>Qt::ImhDigitsOnly</set>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pushButton_2">
+      <property name="text">
+       <string>Generate Seed</string>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QLineEdit" name="leCount">
       <property name="inputMethodHints">
        <set>Qt::ImhDigitsOnly</set>
       </property>
       <property name="text">
-       <string>100</string>
+       <string>11</string>
       </property>
      </widget>
     </item>
     <item>
      <widget class="QPushButton" name="pushButton">
       <property name="text">
-       <string>PushButton</string>
+       <string>Generate Map</string>
       </property>
      </widget>
     </item>
@@ -42,7 +62,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>858</width>
+     <width>274</width>
      <height>20</height>
     </rect>
    </property>
