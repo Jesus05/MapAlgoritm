@@ -15,10 +15,14 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    DebugAddons.cpp
+    DebugAddons.cpp \
+    troomsgenerator.cpp \
+    trandomizer.cpp
 
 HEADERS  += mainwindow.h \
     DebugAddons.h \
-    Types.h
+    Types.h \
+    troomsgenerator.h \
+    trandomizer.h
 
 FORMS    += mainwindow.ui

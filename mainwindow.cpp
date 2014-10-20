@@ -11,6 +11,7 @@
 #include <QWheelEvent>
 #include <QImage>
 #include <QElapsedTimer>
+#include "trandomizer.h"
 
 MainWindow *debugPointer;
 
@@ -78,17 +79,6 @@ MapObjAlgList GetList()
   temp.maxCount = 1;
   
   result.push_back(temp);
-  return result;
-}
-
-int GetRandom(int min, int max)
-{
-  int rand = qrand();
-  
-  double randPos = (double)rand / RAND_MAX;
-  
-  int result = max - (int)((double)(max - min + 1) * randPos);
-  
   return result;
 }
 
@@ -161,7 +151,7 @@ Directions SelectRandDirection(Directions having)
   
   while (ExitCount(result) < 1)
   {
-    randomIndex = GetRandom(0, 4);
+    randomIndex = TRandomizer::GetRandom(0, 4);
     if (qrand() % 2) result = (Directions)(result | randomExits[randomIndex]);
   }
   
@@ -207,7 +197,7 @@ Directions GetRandomExits(int exitCount, Directions having)
   
   while (ExitCount(result) < exitCount)
   {
-    randomIndex = GetRandom(0, 3);
+    randomIndex = TRandomizer::GetRandom(0, 3);
     if (qrand() % 2) result = (Directions)(result | randomExits[randomIndex]);
 //    qDebug() << "result loop" << result << randomIndex << randomExits[randomIndex];
   }
@@ -434,7 +424,7 @@ Tag GetRandomRoomType(const MapObjAlgList &objList/*, const Room &room, const Ro
     edge.push_back(chanceSumm);
   }
   
-  const int rand = GetRandom(0, chanceSumm);
+  const int rand = TRandomizer::GetRandom(0, chanceSumm);
   
   qDebug() << "GetRandomRoomType" /*<< objList */<< edge << rand;
   
