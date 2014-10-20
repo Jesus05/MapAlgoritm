@@ -8,16 +8,19 @@
 #include <QStack>
 #include <qlogging.h>
 #include <QMessageBox>
+#include <QWheelEvent>
+#include <QImage>
+#include <QElapsedTimer>
 
 MainWindow *debugPointer;
 
 MapObjectStruct ObjectList[] = {
-  { 0, "Enter"     , 0, 100, {0, -1}   , {2, 0, -1}},
-  { 1, "Exit"      , 0, 100, {1, -1}   , {1, -1}   },
-  { 2, "BeforeExit", 0, 100, {1, 2, -1}, {2, -1}   },
-  { 3, "Situation" , 0, 100, {3, -1}   , {3, -1}   },
-  { 4, "Boss"      , 3, 100, {4, -1}   , {0, 4, -1}},
-  { 5, "Vault"     , 4, 100, {5, -1}   , {5, -1}   }
+  { 0, "Enter"     , 0, 100, {   -1}, {1, 2, 4,          -1}},
+  { 1, "Exit"      , 0, 100, {   -1}, {0,                -1}},
+  { 2, "BeforeExit", 0, 100, {   -1}, {0, 1, 2, 3, 4, 5, -1}}, //Думаю ее вообще лучше ставить постпроцессом.
+  { 3, "Situation" , 0, 100, {   -1}, {                  -1}},
+  { 4, "Boss"      , 3, 100, {   -1}, {0,                -1}},
+  { 5, "Vault"     , 4, 100, {   -1}, {                  -1}}
 };
 
 typedef QList <MapObjectForAlg> MapObjAlgList;
@@ -56,13 +59,13 @@ MapObjAlgList GetList()
   
   temp.chance = 100;
   temp.minCount = 5;
-  temp.maxCount = -1;
+  temp.maxCount = 12;
   
   result.push_back(temp);
   
   temp = ObjectList[4];
   
-  temp.chance = 40;
+  temp.chance = 100;
   temp.minCount = 0;
   temp.maxCount = 2;
   
@@ -70,12 +73,11 @@ MapObjAlgList GetList()
   
   temp = ObjectList[5];
   
-  temp.chance = 20;
+  temp.chance = 100;
   temp.minCount = 0;
   temp.maxCount = 1;
   
   result.push_back(temp);
-  
   return result;
 }
 
@@ -90,18 +92,18 @@ int GetRandom(int min, int max)
   return result;
 }
 
-int GetRandomExitCount(int havingRooms, int needRooms, int HavingExit = 1)
+int GetRandomExitCount(int havingRooms, int needRooms, int HavingExit = 1/*, int unfinishedRooms = 0*/)
 {
   if (havingRooms > needRooms) return HavingExit;
 
   int rand = qrand();
-  int min = HavingExit;
+  int min = HavingExit + 1;
   int max = 3;
   
   double randPos = (double)rand / RAND_MAX;
   double roomPos = (double)havingRooms / needRooms;
-  double roomCutMin = 0.6;
-  double roomCutMax = 0.9;
+  double roomCutMin = 0.8;
+  double roomCutMax = 1.0;
   roomPos = roomCutMin + roomPos*(roomCutMax-roomCutMin); //Обрежем диапазон до roomCutMin ... roomCutMax
   double resultPos = randPos * roomPos;
   //TODO поиграться с формулами зависимости отсавшихся комнат и рандома.
@@ -228,6 +230,9 @@ Room FillNextRoomCoordinate(Room room, Directions freeExits)
 
 Directions GetFreeExits(Room room, const RoomList list)
 {
+  QElapsedTimer time;
+  time.start();
+  #define FUNC_NAME "GetFreeExits"
   RoomList::const_iterator it;
 //  const RoomList::iterator left = list.end(), right = list.end(), down = list.end(), up = list.end();
   Directions result = room.exits;
@@ -250,11 +255,21 @@ Directions GetFreeExits(Room room, const RoomList list)
   
 //  qDebug() << "EndFreeExits: " << result;
   
+  
+  if (time.elapsed() > 0)
+  {
+    qDebug() << FUNC_NAME << time.elapsed();
+  }
+  #undef FUNC_NAME
+  
   return result;
 }
 
 Directions GetNeighborExits(Room room, const RoomList &list)
 {
+  QElapsedTimer time;
+  time.start();
+  #define FUNC_NAME "GetNeighborExits"
   RoomList::const_iterator it;
 //  const RoomList::iterator left = list.end(), right = list.end(), down = list.end(), up = list.end();
   Directions result = room.exits;
@@ -276,12 +291,19 @@ Directions GetNeighborExits(Room room, const RoomList &list)
   }
   
 //  qDebug() << "GetNeighborExits: " << result;
-  
+  if (time.elapsed() > 0)
+  {
+    qDebug() << FUNC_NAME << time.elapsed();
+  }
+  #undef FUNC_NAME
   return result;
 }
 
 Directions GetRejectNeighborNoExits(Room room, const RoomList &list)
 {
+  QElapsedTimer time;
+  time.start();
+  #define FUNC_NAME "GetRejectNeighborNoExits"
   RoomList::const_iterator it;
 //  const RoomList::iterator left = list.end(), right = list.end(), down = list.end(), up = list.end();
   Directions result = room.exits;
@@ -304,24 +326,139 @@ Directions GetRejectNeighborNoExits(Room room, const RoomList &list)
   
 //  qDebug() << "GetNeighborRejectExits: " << result;
   
+  if (time.elapsed() > 0)
+  {
+    qDebug() << FUNC_NAME << time.elapsed();
+  }
+  #undef FUNC_NAME
+  
   return result;
 }
 
-bool IsFreePlace(Room room, const RoomList &list)
+bool IsFreePlace(const Room &room, const RoomList &list)
 {
+  QElapsedTimer  time;
+  time.start();
+  #define FUNC_NAME "IsFreePlace"
   RoomList::const_iterator it;
   
   for (it = list.begin(); it != list.end(); it++)
   {
     const Room &curRoom = *it;
-    if (curRoom.x == room.x && curRoom.y == room.y) return false;
+    if (curRoom.x == room.x && curRoom.y == room.y) 
+    {
+        if (time.elapsed() > 0)
+        {
+          qDebug() << FUNC_NAME << time.elapsed() << "true";
+        }
+      return false;
+    }
   }
+  
+  if (time.elapsed() > 0)
+  {
+    qDebug() << FUNC_NAME << time.elapsed() << "false";
+  }
+  #undef FUNC_NAME
   
   return true;
 }
 
+QList<Tag> GetNearestRoomTags(const Room &room, const RoomList &list)
+{
+  QElapsedTimer  time;
+  time.start();
+  #define FUNC_NAME "GetNearestRoomTags"
+  RoomList::const_iterator it;
+  
+  QList<Tag> result;
+  
+  for (it = list.begin(); it != list.end(); it++)
+  {
+    const Room &curRoom = *it;
+    if (curRoom.exits & DIR_DOWN && curRoom.x == room.x && (curRoom.y-1) == room.y) result.push_back(curRoom.roomType);
+    if (curRoom.exits & DIR_UP && curRoom.x == room.x && (curRoom.y+1) == room.y) result.push_back(curRoom.roomType);
+    if (curRoom.exits & DIR_RIGHT && (curRoom.x+1) == room.x && curRoom.y == room.y) result.push_back(curRoom.roomType);
+    if (curRoom.exits & DIR_LEFT && (curRoom.x-1) == room.x && curRoom.y == room.y) result.push_back(curRoom.roomType);
+  }
+  
+  if (time.elapsed() > 0)
+  {
+    qDebug() << FUNC_NAME << time.elapsed();
+  }
+  #undef FUNC_NAME
+  
+  return result;
+}
+
+MapObjAlgList GetObjListForRoom(const MapObjAlgList &objList, const Room &room, const RoomList &list)
+{
+  const QList<Tag> tags = GetNearestRoomTags(room, list);
+  MapObjAlgList result;
+  
+  MapObjAlgList::const_iterator it;
+  for (it = objList.begin(); it != objList.end(); it++)
+  {
+    const MapObjectForAlg &obj = *it;
+    bool needAdd = true;
+    for (int i = 0; i < EndArraySize && (obj.rejectList[i] != -1); i++)
+    {
+      if(tags.contains(obj.rejectList[i])) {needAdd = false; break;}
+    }
+    if (needAdd)
+    {
+//      qDebug() << "obj.maxCount" << obj.maxCount << "obj.havingCount" << obj.havingCount;
+      if (obj.maxCount > obj.havingCount)
+      {
+        result.push_back(obj);
+      }
+    }
+  }
+  
+  return result;
+}
+
+Tag GetRandomRoomType(const MapObjAlgList &objList/*, const Room &room, const RoomList &list*/)
+{
+  MapObjAlgList::const_iterator it;
+  
+  int chanceSumm = 0;
+  
+  QVector<int> edge;
+  edge.push_back(0);
+  
+  for (it = objList.begin(); it != objList.end(); it++)
+  {
+    const MapObjectForAlg &obj = *it;
+    chanceSumm += obj.chance * (obj.maxCount - obj.havingCount);
+    edge.push_back(chanceSumm);
+  }
+  
+  const int rand = GetRandom(0, chanceSumm);
+  
+  qDebug() << "GetRandomRoomType" /*<< objList */<< edge << rand;
+  
+  for (int i = 0; i < objList.count(); i++)
+  {
+    qDebug() << "Loop " << i << objList.at(i).tag << edge.at(i) << rand << (edge.at(i) < rand);
+    if (rand < edge.at(i))
+    {
+      qDebug() << "Return" << i << objList.at(i).tag;
+      return objList.at(i).tag;
+    }
+  }
+  
+  qDebug() << "NoResturn!!!";
+  
+  return 3; //Если не получилось получить рандомный тип комнаты возвращаем ситуацию.
+}
+
 RoomList DrawLabirint(MapObjAlgList objList, int count)
 {
+  QElapsedTimer time;
+  time.start();
+  #define FUNC_NAME "DrawLabirint"
+  
   RoomList result;
   
   Room newRoom;
@@ -329,17 +466,24 @@ RoomList DrawLabirint(MapObjAlgList objList, int count)
   newRoom.x = 0;
   newRoom.y = 0;
   newRoom.roomType = 0; //Вход всегда первый.
-  newRoom.exits = GetRandomExits(GetRandomExitCount(0, count), DIR_NO);
+  
+  newRoom.exits = GetRandomExits(GetRandomExitCount(0, count, ExitCount(DIR_NO)), DIR_NO);
   
 //  qDebug() << "One:" << newRoom;
   
   result.push_back(newRoom);
+  objList[newRoom.roomType].havingCount++;
   
   QStack<Room> unfinishedRooms;
   unfinishedRooms.push(newRoom);
   
+  
   while (!unfinishedRooms.empty())
   {
+    QElapsedTimer time2;
+    time2.start();
+    #define FUNC_NAME2 "DrawLabirint OneRoom"
+  
     Room oldRoom = unfinishedRooms.pop();
   
     Directions oldFreeExist = GetFreeExits(oldRoom, result);
@@ -353,16 +497,19 @@ RoomList DrawLabirint(MapObjAlgList objList, int count)
     if (oldFreeExist != DIR_NO)
     {
       newRoom = FillNextRoomCoordinate(oldRoom, GetFreeExits(oldRoom, result));
-      newRoom.roomType = 3; //Пока все будут ситуациями рандом позже.
+//      newRoom.roomType = 3; //Пока все будут ситуациями рандом позже.
+      newRoom.roomType = GetRandomRoomType(GetObjListForRoom(objList, newRoom, result));
 //      qDebug() << newRoom << "re" << newRoom.exits << "GNE" << GetNeighborExits(newRoom, result) << "GNRE" << GetRejectNeighborNoExits(newRoom, result);
-      newRoom.exits = GetRandomExits(GetRandomExitCount(result.count(), count), (Directions)(newRoom.exits | GetNeighborExits(newRoom, result)));
+      newRoom.exits = (Directions)(newRoom.exits | GetNeighborExits(newRoom, result));
+      newRoom.exits = GetRandomExits(GetRandomExitCount(result.count(), count, ExitCount(newRoom.exits)), newRoom.exits);
       newRoom.exits = GetRejectNeighborNoExits(newRoom, result);
 //      qDebug() << "GNRE2" << GetRejectNeighborNoExits(newRoom, result);
 //      qDebug() << "Two:" << newRoom;
-    
+      
       if (IsFreePlace(newRoom, result))
       {
         result.push_back(newRoom);
+        objList[newRoom.roomType].havingCount++;
         if (GetFreeExits(newRoom, result) != DIR_NO) unfinishedRooms.push(newRoom);
 //        qDebug() << "Accepted\r\n-------------------\r\n";
 //        debugPointer->DrawRooms(result);
@@ -378,10 +525,22 @@ RoomList DrawLabirint(MapObjAlgList objList, int count)
       }
       if (oldFreeExist != DIR_NO) unfinishedRooms.push(oldRoom);
     }
+    
     qDebug() << "UnfinishedCount" << unfinishedRooms.count() << "result count" << result.count(); 
+    if (time2.elapsed() > 0)
+    {
+      qDebug() << FUNC_NAME2 << time2.elapsed();
+    }
+    #undef FUNC_NAME2
   }
 
 //  qDebug() << "\r\n\r\n-------------------------------------\r\n\r\n" << result;
+
+  if (time.elapsed() > 0)
+  {
+    qDebug() << FUNC_NAME << time.elapsed();
+  }
+  #undef FUNC_NAME
 
   return result;
 }
@@ -393,12 +552,13 @@ MainWindow::MainWindow(QWidget *parent) :
 {
   ui->setupUi(this);
   ui->graphicsView->setScene(new QGraphicsScene);
-  ui->graphicsView->setSceneRect(0, 0, 0, 0);
+  ui->graphicsView->setSceneRect(0, 0, 1, 1);
   m_minX = 0;
   m_minY = 0;
   m_maxX = 1;
   m_maxY = 1;
   debugPointer = this;
+  ui->graphicsView->viewport()->installEventFilter(this);
 }
 
 MainWindow::~MainWindow()
@@ -504,6 +664,35 @@ void MainWindow::resizeEvent(QResizeEvent *event)
   }
 }
 
+bool MainWindow::eventFilter(QObject */*target*/, QEvent *event)
+{
+  if (QEvent::Wheel == event->type())
+  {
+    QWheelEvent *wheelEvent = dynamic_cast<QWheelEvent*>(event);
+    if (wheelEvent != NULL)
+    {
+      double d = 1.0 + 10.0 / wheelEvent->delta();
+      ui->graphicsView->scale(d, d);
+      event->accept();
+      return true;
+    }
+  }
+  return false;
+}
+
+
+void PrintAllRoomNeighborTags(const RoomList &rooms)
+{
+  RoomList::const_iterator it;
+    for (it = rooms.begin(); it != rooms.end(); it++)
+  {
+    const Room &room = *it;
+    const QList<Tag> &temp = GetNearestRoomTags(room, rooms);
+    const MapObjAlgList &temp2 = GetObjListForRoom(GetList(), room, rooms);
+    qDebug() << "TagList: " << room << temp << temp2;
+  }
+}
+
 void MainWindow::TestFour()
 {
   int roomCount = ui->leCount->text().toInt();
@@ -522,13 +711,28 @@ void MainWindow::TestFour()
   
   DrawRooms(rooms);
   
+//  PrintAllRoomNeighborTags(rooms);
+  
   on_pushButton_2_clicked();
 }
 
-void MainWindow::DrawRooms(RoomList &rooms)
+QColor GetColorByTag(const Tag &tag)
+{
+  switch (tag) {
+    case 0: return Qt::blue; break; //Enter
+    case 1: return Qt::darkBlue; break; //Exit
+    case 2: return Qt::darkCyan; break; //BeforeExit
+    case 3: return Qt::yellow; break; //Situation
+    case 4: return Qt::darkGray; break; //Boss
+    case 5: return Qt::magenta; break; //Vault
+    default: return Qt::black; break;
+  }
+}
+
+void MainWindow::DrawRooms(const RoomList &rooms)
 {
   ui->graphicsView->scene()->clear();
-  ui->graphicsView->setSceneRect(0, 0, 0, 0);
+  ui->graphicsView->setSceneRect(0, 0, 1, 1);
   
   RoomList::const_iterator it;
   
@@ -536,7 +740,7 @@ void MainWindow::DrawRooms(RoomList &rooms)
   {
     const Room &room = *it;
     const int lminx = room.x * 20, lminy = -room.y * 20, lmaxx = (room.x+1) * 20, lmaxy = (-room.y+1) * 20;
-    ui->graphicsView->scene()->addRect(lminx + 5, lminy + 5, 10, 10, QPen(), QBrush(room.roomType == 0 ? Qt::blue : Qt::yellow));
+    ui->graphicsView->scene()->addRect(lminx + 5, lminy + 5, 10, 10, QPen(), QBrush(GetColorByTag(room.roomType)));
     m_minX = qMin(m_minX, lminx);
     m_minY = qMin(m_minY, lminy);
     m_maxX = qMax(m_maxX, lmaxx);
@@ -558,6 +762,17 @@ void MainWindow::DrawRooms(RoomList &rooms)
 
 void MainWindow::on_pushButton_2_clicked()
 {
-  ui->pushButton_2->setText(QString("Generate seed. old seed:") + ui->leSeed->text());
+  ui->lLastSeed->setText(ui->leSeed->text());
+//  ui->pushButton_2->setText(QString("Generate seed. old seed:") + ui->leSeed->text());
   ui->leSeed->setText(QString::number(qrand()));
+}
+
+void MainWindow::on_pushButton_3_clicked()
+{
+  QImage image(ui->graphicsView->scene()->sceneRect().size().toSize(), QImage::Format_ARGB32);
+  QPainter painter(&image);
+  painter.setRenderHint(QPainter::Antialiasing);
+  ui->graphicsView->scene()->render(&painter);
+  image.save(QString("Labirint seed ") + ui->lLastSeed->text() + " count " + ui->leCount->text() + ".png");
+  ui->graphicsView->scene()->items().count();
 }

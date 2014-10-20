@@ -8,7 +8,7 @@ QDebug operator<<(QDebug debug, const EndArray &obj)
 #endif
 {
     const bool oldSetting = debug.autoInsertSpaces();
-    for (int i = 0; i < 256 && obj[i] != -1; i++)
+    for (int i = 0; i < EndArraySize && obj[i] != -1; i++)
     {
       debug << obj[i] << ", ";
     }
@@ -33,6 +33,7 @@ QDebug operator<<(QDebug debug, MapObjectForAlg const &obj)
     debug << "\r\n Chance: " << obj.chance;
     debug << "\r\n MinCount: " << obj.minCount;
     debug << "\r\n MaxCount: " << obj.maxCount;
+    debug << "\r\n HavingCount: " << obj.havingCount;
     debug << "\r\n\r\n";
     debug.setAutoInsertSpaces(oldSetting);
     return debug.maybeSpace();

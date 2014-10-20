@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>274</width>
-    <height>315</height>
+    <width>291</width>
+    <height>375</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -25,18 +25,36 @@
      <widget class="QGraphicsView" name="graphicsView"/>
     </item>
     <item>
-     <widget class="QLineEdit" name="leSeed">
-      <property name="inputMethodHints">
-       <set>Qt::ImhDigitsOnly</set>
+     <widget class="QPushButton" name="pushButton_3">
+      <property name="text">
+       <string>Save Image To File</string>
       </property>
      </widget>
     </item>
     <item>
-     <widget class="QPushButton" name="pushButton_2">
-      <property name="text">
-       <string>Generate Seed</string>
-      </property>
-     </widget>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QLineEdit" name="leSeed">
+        <property name="inputMethodHints">
+         <set>Qt::ImhDigitsOnly</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_2">
+        <property name="text">
+         <string>Generate Seed</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="lLastSeed">
+        <property name="text">
+         <string>TextLabel</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
     <item>
      <widget class="QLineEdit" name="leCount">
@@ -62,7 +80,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>274</width>
+     <width>291</width>
      <height>20</height>
     </rect>
    </property>

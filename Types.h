@@ -3,7 +3,9 @@
 
 typedef int Tag;
 
-typedef int EndArray[256];
+const int EndArraySize = 256;
+
+typedef int EndArray[EndArraySize];
 
 struct MapObjectStruct
 {
@@ -25,12 +27,17 @@ struct MapObjectForAlg : public MapObjectStruct
     maxHardness = other.maxHardness;
     memcpy((int*)allowList, (int*)other.allowList, sizeof(other.allowList));
     memcpy((int*)rejectList, (int*)other.rejectList, sizeof(other.rejectList));
+    chance = 0;
+    minCount = 0;
+    maxCount = 0;
+    havingCount = 0;
     return *this;
   }
 
   int chance;
   int minCount;
   int maxCount;
+  int havingCount;
 };
 
 enum Directions
@@ -57,6 +64,7 @@ struct Pointer
 
 struct Room : public Pointer
 {
+  Room() { exits = DIR_NO; roomType = -1; }
   Directions exits;
   Tag roomType;
 };
