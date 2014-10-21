@@ -1,5 +1,6 @@
 #ifndef TYPES_H
 #define TYPES_H
+#include <cstring>
 
 typedef int Tag;
 
