@@ -68,6 +68,7 @@ struct Room : public Pointer
   Room() { exits = DIR_NO; roomType = -1; }
   Directions exits;
   Tag roomType;
+  int index;
 };
 
 #endif // TYPES_H

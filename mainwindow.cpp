@@ -7,6 +7,7 @@
 #include <QImage>
 #include "trandomizer.h"
 #include "troomsgenerator.h"
+#include <QGraphicsTextItem>
 
 MainWindow *debugPointer;
 
@@ -142,8 +143,9 @@ void TestTwo()
   
   for (int i = min; i < max; i++)
   {
+    TRoomsGenerator rooms;
     qDebug() << "BeforeDraw";
-    TRoomsGenerator::DrawLabirint(GetList(), i);
+    rooms.DrawLabirint(GetList(), i);
     qDebug() << "AfterDraw";
   }
 }
@@ -234,8 +236,10 @@ void MainWindow::TestFour()
   qDebug() << "randSeed" << randSeed;
   qsrand(randSeed);
 
+  TRoomsGenerator roomsHolder;
+
   qDebug() << "BeforeDraw";
-  RoomList rooms = TRoomsGenerator::DrawLabirint(GetList(), roomCount);
+  RoomList rooms = roomsHolder.DrawLabirint(GetList(), roomCount);
   qDebug() << "AfterDraw" << "room count" << rooms.count();
   
   DrawRooms(rooms);
@@ -261,7 +265,7 @@ QColor GetColorByTag(const Tag &tag)
 void MainWindow::DrawRooms(const RoomList &rooms)
 {
   ui->graphicsView->scene()->clear();
-  ui->graphicsView->setSceneRect(0, 0, 1, 1);
+  ui->graphicsView->setSceneRect(QRectF());
   
   RoomList::const_iterator it;
   
@@ -270,6 +274,7 @@ void MainWindow::DrawRooms(const RoomList &rooms)
     const Room &room = *it;
     const int lminx = room.x * 20, lminy = -room.y * 20, lmaxx = (room.x+1) * 20, lmaxy = (-room.y+1) * 20;
     ui->graphicsView->scene()->addRect(lminx + 5, lminy + 5, 10, 10, QPen(), QBrush(GetColorByTag(room.roomType)));
+    ui->graphicsView->scene()->addText(QString::number(room.index), QFont("Small Font", 7))->setPos(lminx + 2,lminy);
     m_minX = qMin(m_minX, lminx);
     m_minY = qMin(m_minY, lminy);
     m_maxX = qMax(m_maxX, lmaxx);
@@ -285,8 +290,12 @@ void MainWindow::DrawRooms(const RoomList &rooms)
   
 //  qDebug() << "minX:" << minX << "minY:" << minY << "maxX" << maxX << "maxY" << maxY;
   
-  ui->graphicsView->fitInView(m_minX, m_minY, m_maxX - m_minX, m_maxY - m_minY, Qt::KeepAspectRatio);
-  ui->graphicsView->fitInView(m_minX, m_minY, m_maxX - m_minX, m_maxY - m_minY, Qt::KeepAspectRatio);
+  ui->graphicsView->scene()->setSceneRect(QRectF());
+  
+  ui->graphicsView->fitInView(ui->graphicsView->scene()->itemsBoundingRect(), Qt::KeepAspectRatio);
+  
+//  ui->graphicsView->fitInView(m_minX, m_minY, m_maxX - m_minX, m_maxY - m_minY, Qt::KeepAspectRatio);
+//  ui->graphicsView->fitInView(m_minX, m_minY, m_maxX - m_minX, m_maxY - m_minY, Qt::KeepAspectRatio);
 }
 
 void MainWindow::on_pushButton_2_clicked()

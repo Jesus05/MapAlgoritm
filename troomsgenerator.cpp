@@ -3,6 +3,7 @@
 #include <QElapsedTimer>
 #include <QDebug>
 #include <QStack>
+#include <QQueue>
 
 TRoomsGenerator::TRoomsGenerator()
 {
@@ -131,7 +132,7 @@ Directions TRoomsGenerator::GetRandomExits(int exitCount, Directions having)
     return result;
 }
 
-Room TRoomsGenerator::FillNextRoomCoordinate(Room room, Directions freeExits)
+Room TRoomsGenerator::FillNextRoomCoordinate(Room room, Directions freeExits) const
 {
   Room result = room;
   Directions temp = SelectRandDirection(freeExits);
@@ -144,7 +145,7 @@ Room TRoomsGenerator::FillNextRoomCoordinate(Room room, Directions freeExits)
   return result;
 }
 
-Directions TRoomsGenerator::GetFreeExits(Room room, const RoomList list)
+Directions TRoomsGenerator::GetFreeExits(Room room) const
 {
   QElapsedTimer time;
   time.start();
@@ -155,7 +156,7 @@ Directions TRoomsGenerator::GetFreeExits(Room room, const RoomList list)
   
 //  qDebug() << "StartFreeExits: " << result;
   
-  for (it = list.begin(); it != list.end(); it++)
+  for (it = m_rooms.begin(); it != m_rooms.end(); it++)
   {
     const Room &curRoom = *it;
     if (room.exits & DIR_UP && curRoom.x == room.x && (curRoom.y-1) == room.y) result = (Directions)(result & ~DIR_UP);
@@ -181,7 +182,7 @@ Directions TRoomsGenerator::GetFreeExits(Room room, const RoomList list)
   return result;
 }
 
-Directions TRoomsGenerator::GetNeighborExits(Room room, const RoomList &list)
+Directions TRoomsGenerator::GetNeighborExits(Room room) const
 {
   QElapsedTimer time;
   time.start();
@@ -192,7 +193,7 @@ Directions TRoomsGenerator::GetNeighborExits(Room room, const RoomList &list)
   
 //  qDebug() << "GetNeighborExits: " << result;
   
-  for (it = list.begin(); it != list.end(); it++)
+  for (it = m_rooms.begin(); it != m_rooms.end(); it++)
   {
     const Room &curRoom = *it;
     if (curRoom.exits & DIR_DOWN && curRoom.x == room.x && (curRoom.y-1) == room.y) result = (Directions)(result | DIR_UP);
@@ -215,58 +216,60 @@ Directions TRoomsGenerator::GetNeighborExits(Room room, const RoomList &list)
   return result;
 }
 
-Directions TRoomsGenerator::GetRejectNeighborNoExits(Room room, const RoomList &list)
+Directions TRoomsGenerator::GetRejectNeighborNoExits(Room room) const
 {
   QElapsedTimer time;
   time.start();
-  #define FUNC_NAME "GetRejectNeighborNoExits"
+#define FUNC_NAME "GetRejectNeighborNoExits"
   RoomList::const_iterator it;
-//  const RoomList::iterator left = list.end(), right = list.end(), down = list.end(), up = list.end();
+  //  const RoomList::iterator left = list.end(), right = list.end(), down = list.end(), up = list.end();
   Directions result = room.exits;
   
-//  qDebug() << "GetNeighborRejectExits: " << result;
+  //  qDebug() << "GetNeighborRejectExits: " << result;
   
-  for (it = list.begin(); it != list.end(); it++)
+  for (it = m_rooms.begin(); it != m_rooms.end(); it++)
   {
     const Room &curRoom = *it;
     if ((curRoom.exits & DIR_DOWN) == 0 && curRoom.x == room.x && (curRoom.y-1) == room.y) result = (Directions)(result & ~DIR_UP);
     if ((curRoom.exits & DIR_UP) == 0 && curRoom.x == room.x && (curRoom.y+1) == room.y) result = (Directions)(result & ~DIR_DOWN);
     if ((curRoom.exits & DIR_RIGHT) == 0 && (curRoom.x+1) == room.x && curRoom.y == room.y) result = (Directions)(result & ~DIR_LEFT);
     if ((curRoom.exits & DIR_LEFT) == 0 && (curRoom.x-1) == room.x && curRoom.y == room.y) result = (Directions)(result & ~DIR_RIGHT);
-//    qDebug() << "UP:" << ((curRoom.exits & DIR_DOWN) == 0 && curRoom.x == room.x && (curRoom.y-1) == room.y) << ((curRoom.exits & DIR_DOWN) == 0 && curRoom.x == room.x && (curRoom.y-1) == room.y);
-//    qDebug() << "DOWN:" << ((curRoom.exits & DIR_UP) == 0 && curRoom.x == room.x && (curRoom.y+1) == room.y) << ((curRoom.exits & DIR_UP) == 0 && curRoom.x == room.x && (curRoom.y+1) == room.y);
-//    qDebug() << "LEFT:" << ((curRoom.exits & DIR_RIGHT) == 0 && (curRoom.x+1) == room.x && curRoom.y == room.y) << ((curRoom.exits & DIR_RIGHT) == 0 && (curRoom.x+1) == room.x && curRoom.y == room.y);
-//    qDebug() << "RIGHT:" << ((curRoom.exits & DIR_LEFT) == 0 && (curRoom.x-1) == room.x && curRoom.y == room.y) << ((curRoom.exits & DIR_LEFT) == 0 && (curRoom.x-1) == room.x && curRoom.y == room.y);
-//    qDebug() << curRoom << result;
+    //    qDebug() << "UP:" << ((curRoom.exits & DIR_DOWN) == 0 && curRoom.x == room.x && (curRoom.y-1) == room.y) << ((curRoom.exits & DIR_DOWN) == 0 && curRoom.x == room.x && (curRoom.y-1) == room.y);
+    //    qDebug() << "DOWN:" << ((curRoom.exits & DIR_UP) == 0 && curRoom.x == room.x && (curRoom.y+1) == room.y) << ((curRoom.exits & DIR_UP) == 0 && curRoom.x == room.x && (curRoom.y+1) == room.y);
+    //    qDebug() << "LEFT:" << ((curRoom.exits & DIR_RIGHT) == 0 && (curRoom.x+1) == room.x && curRoom.y == room.y) << ((curRoom.exits & DIR_RIGHT) == 0 && (curRoom.x+1) == room.x && curRoom.y == room.y);
+    //    qDebug() << "RIGHT:" << ((curRoom.exits & DIR_LEFT) == 0 && (curRoom.x-1) == room.x && curRoom.y == room.y) << ((curRoom.exits & DIR_LEFT) == 0 && (curRoom.x-1) == room.x && curRoom.y == room.y);
+    //    qDebug() << curRoom << result;
   }
   
-//  qDebug() << "GetNeighborRejectExits: " << result;
+  //  qDebug() << "GetNeighborRejectExits: " << result;
   
   if (time.elapsed() > 0)
   {
     qDebug() << FUNC_NAME << time.elapsed();
   }
-  #undef FUNC_NAME
+#undef FUNC_NAME
   
   return result;
 }
 
-bool TRoomsGenerator::IsFreePlace(const Room &room, const RoomList &list)
+
+
+bool TRoomsGenerator::IsFreePlace() const
 {
   QElapsedTimer  time;
   time.start();
-  #define FUNC_NAME "IsFreePlace"
+#define FUNC_NAME "IsFreePlace"
   RoomList::const_iterator it;
   
-  for (it = list.begin(); it != list.end(); it++)
+  for (it = m_rooms.begin(); it != m_rooms.end(); it++)
   {
     const Room &curRoom = *it;
-    if (curRoom.x == room.x && curRoom.y == room.y) 
+    if (curRoom.x == m_curRoom.x && curRoom.y == m_curRoom.y) 
     {
-        if (time.elapsed() > 0)
-        {
-          qDebug() << FUNC_NAME << time.elapsed() << "true";
-        }
+      if (time.elapsed() > 0)
+      {
+        qDebug() << FUNC_NAME << time.elapsed() << "true";
+      }
       return false;
     }
   }
@@ -275,7 +278,7 @@ bool TRoomsGenerator::IsFreePlace(const Room &room, const RoomList &list)
   {
     qDebug() << FUNC_NAME << time.elapsed() << "false";
   }
-  #undef FUNC_NAME
+#undef FUNC_NAME
   
   return true;
 }
@@ -284,7 +287,7 @@ QList<Tag> TRoomsGenerator::GetNearestRoomTags(const Room &room, const RoomList 
 {
   QElapsedTimer  time;
   time.start();
-  #define FUNC_NAME "GetNearestRoomTags"
+#define FUNC_NAME "GetNearestRoomTags"
   RoomList::const_iterator it;
   
   QList<Tag> result;
@@ -302,7 +305,7 @@ QList<Tag> TRoomsGenerator::GetNearestRoomTags(const Room &room, const RoomList 
   {
     qDebug() << FUNC_NAME << time.elapsed();
   }
-  #undef FUNC_NAME
+#undef FUNC_NAME
   
   return result;
 }
@@ -323,7 +326,7 @@ MapObjAlgList TRoomsGenerator::GetObjListForRoom(const MapObjAlgList &objList, c
     }
     if (needAdd)
     {
-//      qDebug() << "obj.maxCount" << obj.maxCount << "obj.havingCount" << obj.havingCount;
+      //      qDebug() << "obj.maxCount" << obj.maxCount << "obj.havingCount" << obj.havingCount;
       if (obj.maxCount > obj.havingCount)
       {
         result.push_back(obj);
@@ -375,23 +378,21 @@ RoomList TRoomsGenerator::DrawLabirint(MapObjAlgList objList, int count)
   time.start();
   #define FUNC_NAME "DrawLabirint"
   
-  RoomList result;
+  m_curRoom.x = 0;
+  m_curRoom.y = 0;
+//  m_curRoom.roomType = 0; //Вход всегда первый.
+  m_curRoom.roomType = 3; //Пока все будут ситуациями рандом позже.
+  m_curRoom.index = 0;
   
-  Room newRoom;
-  
-  newRoom.x = 0;
-  newRoom.y = 0;
-  newRoom.roomType = 0; //Вход всегда первый.
-  
-  newRoom.exits = GetRandomExits(GetRandomExitCount(0, count, ExitCount(DIR_NO)), DIR_NO);
+  m_curRoom.exits = GetRandomExits(GetRandomExitCount(0, count, ExitCount(DIR_NO)), DIR_NO);
   
 //  qDebug() << "One:" << newRoom;
   
-  result.push_back(newRoom);
-  objList[newRoom.roomType].havingCount++;
+  m_rooms.push_back(m_curRoom);
+  objList[m_curRoom.roomType].havingCount++;
   
   QStack<Room> unfinishedRooms;
-  unfinishedRooms.push(newRoom);
+  unfinishedRooms.push(m_curRoom);
   
   
   while (!unfinishedRooms.empty())
@@ -402,7 +403,7 @@ RoomList TRoomsGenerator::DrawLabirint(MapObjAlgList objList, int count)
   
     Room oldRoom = unfinishedRooms.pop();
   
-    Directions oldFreeExist = GetFreeExits(oldRoom, result);
+    Directions oldFreeExist = GetFreeExits(oldRoom);
     
     if (oldFreeExist & ~DIR_ALL) 
     {
@@ -412,27 +413,28 @@ RoomList TRoomsGenerator::DrawLabirint(MapObjAlgList objList, int count)
   
     if (oldFreeExist != DIR_NO)
     {
-      newRoom = FillNextRoomCoordinate(oldRoom, GetFreeExits(oldRoom, result));
-//      newRoom.roomType = 3; //Пока все будут ситуациями рандом позже.
-      newRoom.roomType = GetRandomRoomType(GetObjListForRoom(objList, newRoom, result));
+      m_curRoom = FillNextRoomCoordinate(oldRoom, GetFreeExits(oldRoom));
+      m_curRoom.roomType = 3; //Пока все будут ситуациями рандом позже.
+//      m_curRoom.roomType = GetRandomRoomType(GetObjListForRoom(objList, m_curRoom, m_rooms));
 //      qDebug() << newRoom << "re" << newRoom.exits << "GNE" << GetNeighborExits(newRoom, result) << "GNRE" << GetRejectNeighborNoExits(newRoom, result);
-      newRoom.exits = (Directions)(newRoom.exits | GetNeighborExits(newRoom, result));
-      newRoom.exits = GetRandomExits(GetRandomExitCount(result.count(), count, ExitCount(newRoom.exits)), newRoom.exits);
-      newRoom.exits = GetRejectNeighborNoExits(newRoom, result);
+      m_curRoom.exits = (Directions)(m_curRoom.exits | GetNeighborExits());
+      m_curRoom.exits = GetRandomExits(GetRandomExitCount(m_rooms.count(), count, ExitCount(m_curRoom.exits)), m_curRoom.exits);
+      m_curRoom.exits = GetRejectNeighborNoExits();
 //      qDebug() << "GNRE2" << GetRejectNeighborNoExits(newRoom, result);
 //      qDebug() << "Two:" << newRoom;
       
-      if (IsFreePlace(newRoom, result))
+      if (IsFreePlace())
       {
-        result.push_back(newRoom);
-        objList[newRoom.roomType].havingCount++;
-        if (GetFreeExits(newRoom, result) != DIR_NO) unfinishedRooms.push(newRoom);
+        m_curRoom.index = oldRoom.index + 1;
+        m_rooms.push_back(m_curRoom);
+        objList[m_curRoom.roomType].havingCount++;
+        if (GetFreeExits(m_curRoom) != DIR_NO) unfinishedRooms.push(m_curRoom);
 //        qDebug() << "Accepted\r\n-------------------\r\n";
 //        debugPointer->DrawRooms(result);
 //        QMessageBox::information(0, "Accepted", "Accepted");
       }
       
-      oldFreeExist = GetFreeExits(oldRoom, result);
+      oldFreeExist = GetFreeExits(oldRoom);
 //      qDebug() << "en" << oldFreeExist << (int)oldFreeExist;
       if (oldFreeExist & ~DIR_ALL)
       {
@@ -442,7 +444,7 @@ RoomList TRoomsGenerator::DrawLabirint(MapObjAlgList objList, int count)
       if (oldFreeExist != DIR_NO) unfinishedRooms.push(oldRoom);
     }
     
-    qDebug() << "UnfinishedCount" << unfinishedRooms.count() << "result count" << result.count(); 
+    qDebug() << "UnfinishedCount" << unfinishedRooms.count() << "result count" << m_rooms.count(); 
     if (time2.elapsed() > 0)
     {
       qDebug() << FUNC_NAME2 << time2.elapsed();
@@ -458,5 +460,5 @@ RoomList TRoomsGenerator::DrawLabirint(MapObjAlgList objList, int count)
   }
   #undef FUNC_NAME
 
-  return result;
+  return m_rooms;
 }

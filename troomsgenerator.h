@@ -10,22 +10,24 @@ class TRoomsGenerator
 {
   public:
     TRoomsGenerator();
-    static RoomList DrawLabirint(MapObjAlgList objList, int count);
+    RoomList DrawLabirint(MapObjAlgList objList, int count);
     static Directions GetRandomExits(int exitCount, Directions having);
     static Directions SelectRandDirection(Directions having);
     static QList<Tag> GetNearestRoomTags(const Room &room, const RoomList &list);
     static MapObjAlgList GetObjListForRoom(const MapObjAlgList &objList, const Room &room, const RoomList &list);
   private:
-    static int GetRandomExitCount(int havingRooms, int needRooms, int HavingExit = 1/*, int unfinishedRooms = 0*/);
+    RoomList m_rooms;
+    Room m_curRoom;
+    int GetRandomExitCount(int havingRooms, int needRooms, int HavingExit = 1/*, int unfinishedRooms = 0*/);
     static int ExitCount(Directions exits);
     static Directions SplitExits(Directions exits[4]);
-    static int ExitCount(Directions exits[4]);
-    static Room FillNextRoomCoordinate(Room room, Directions freeExits);
-    static Directions GetFreeExits(Room room, const RoomList list);
-    static Directions GetNeighborExits(Room room, const RoomList &list);
-    static Directions GetRejectNeighborNoExits(Room room, const RoomList &list);
-    static bool IsFreePlace(const Room &room, const RoomList &list);
-    static Tag GetRandomRoomType(const MapObjAlgList &objList/*, const Room &room, const RoomList &list*/);
+    int ExitCount(Directions exits[4]);
+    Room FillNextRoomCoordinate(Room room, Directions freeExits) const;
+    Directions GetFreeExits(Room room) const;
+    Directions GetNeighborExits(Room room) const;
+    Directions GetRejectNeighborNoExits(Room room) const;
+    bool IsFreePlace() const;
+    Tag GetRandomRoomType(const MapObjAlgList &objList/*, const Room &room, const RoomList &list*/);
 };
 
 #endif // TROOMSGENERATOR_H
