@@ -1,6 +1,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 #include <cstring>
+#include <QList>
 
 typedef int Tag;
 
@@ -65,10 +66,13 @@ struct Pointer
 
 struct Room : public Pointer
 {
-  Room() { exits = DIR_NO; roomType = -1; }
+  Room() { exits = DIR_NO; roomType = -1; left = right = up = down = NULL; }
   Directions exits;
   Tag roomType;
   int index;
+  Room *left, *right, *up, *down;
 };
+
+typedef QList<class Room*> RoomList;
 
 #endif // TYPES_H

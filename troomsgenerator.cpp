@@ -9,6 +9,18 @@ TRoomsGenerator::TRoomsGenerator()
 {
 }
 
+TRoomsGenerator::~TRoomsGenerator()
+{
+  RoomList::iterator it;
+
+  for (it = m_rooms.begin(); it != m_rooms.end(); it++)
+  {
+    Room *curRoom = *it;
+    delete curRoom;
+  }
+  m_rooms.clear();
+}
+
 int TRoomsGenerator::GetRandomExitCount(int havingRooms, int needRooms, int HavingExit)
 {
   if (havingRooms > needRooms) return HavingExit;
@@ -132,17 +144,15 @@ Directions TRoomsGenerator::GetRandomExits(int exitCount, Directions having)
     return result;
 }
 
-Room TRoomsGenerator::FillNextRoomCoordinate(Room room, Directions freeExits) const
+void TRoomsGenerator::FillNextRoomCoordinate(Directions freeExits, Room *retRoom) const
 {
-  Room result = room;
+  Room *result = retRoom;
   Directions temp = SelectRandDirection(freeExits);
   
-  if (temp & DIR_UP) { result.y++; result.exits = DIR_DOWN; }
-  if (temp & DIR_DOWN) { result.y--; result.exits = DIR_UP; }
-  if (temp & DIR_LEFT) { result.x--; result.exits = DIR_RIGHT; }
-  if (temp & DIR_RIGHT) { result.x++; result.exits = DIR_LEFT; }
-  
-  return result;
+  if (temp & DIR_UP) { result->y++; result->exits = DIR_DOWN; }
+  if (temp & DIR_DOWN) { result->y--; result->exits = DIR_UP; }
+  if (temp & DIR_LEFT) { result->x--; result->exits = DIR_RIGHT; }
+  if (temp & DIR_RIGHT) { result->x++; result->exits = DIR_LEFT; }
 }
 
 Directions TRoomsGenerator::GetFreeExits(Room room) const
@@ -158,11 +168,11 @@ Directions TRoomsGenerator::GetFreeExits(Room room) const
   
   for (it = m_rooms.begin(); it != m_rooms.end(); it++)
   {
-    const Room &curRoom = *it;
-    if (room.exits & DIR_UP && curRoom.x == room.x && (curRoom.y-1) == room.y) result = (Directions)(result & ~DIR_UP);
-    if (room.exits & DIR_DOWN && curRoom.x == room.x && (curRoom.y+1) == room.y) result = (Directions)(result & ~DIR_DOWN);
-    if (room.exits & DIR_LEFT && (curRoom.x+1) == room.x && curRoom.y == room.y) result = (Directions)(result & ~DIR_LEFT);
-    if (room.exits & DIR_RIGHT && (curRoom.x-1) == room.x && curRoom.y == room.y) result = (Directions)(result & ~DIR_RIGHT);
+    const Room *curRoom = *it;
+    if (room.exits & DIR_UP && curRoom->x == room.x && (curRoom->y-1) == room.y) result = (Directions)(result & ~DIR_UP);
+    if (room.exits & DIR_DOWN && curRoom->x == room.x && (curRoom->y+1) == room.y) result = (Directions)(result & ~DIR_DOWN);
+    if (room.exits & DIR_LEFT && (curRoom->x+1) == room.x && curRoom->y == room.y) result = (Directions)(result & ~DIR_LEFT);
+    if (room.exits & DIR_RIGHT && (curRoom->x-1) == room.x && curRoom->y == room.y) result = (Directions)(result & ~DIR_RIGHT);
 //    qDebug() << "UP:" << (room.exits & DIR_UP) << (curRoom.x == room.x) << ((curRoom.y-1) == room.y) << (room.exits & DIR_UP && curRoom.x == room.x && (curRoom.y-1) == room.y);
 //    qDebug() << "DOWN:" << (room.exits & DIR_DOWN) << (curRoom.x == room.x) << ((curRoom.y+1) == room.y) << (room.exits & DIR_DOWN && curRoom.x == room.x && (curRoom.y+1) == room.y);
 //    qDebug() << "LEFT:" << (room.exits & DIR_LEFT) << ((curRoom.x+1) == room.x) << (curRoom.y == room.y) << (room.exits & DIR_LEFT && (curRoom.x+1) == room.x && curRoom.y == room.y);
@@ -195,11 +205,11 @@ Directions TRoomsGenerator::GetNeighborExits(Room room) const
   
   for (it = m_rooms.begin(); it != m_rooms.end(); it++)
   {
-    const Room &curRoom = *it;
-    if (curRoom.exits & DIR_DOWN && curRoom.x == room.x && (curRoom.y-1) == room.y) result = (Directions)(result | DIR_UP);
-    if (curRoom.exits & DIR_UP && curRoom.x == room.x && (curRoom.y+1) == room.y) result = (Directions)(result | DIR_DOWN);
-    if (curRoom.exits & DIR_RIGHT && (curRoom.x+1) == room.x && curRoom.y == room.y) result = (Directions)(result | DIR_LEFT);
-    if (curRoom.exits & DIR_LEFT && (curRoom.x-1) == room.x && curRoom.y == room.y) result = (Directions)(result | DIR_RIGHT);
+    const Room *curRoom = *it;
+    if (curRoom->exits & DIR_DOWN && curRoom->x == room.x && (curRoom->y-1) == room.y) result = (Directions)(result | DIR_UP);
+    if (curRoom->exits & DIR_UP && curRoom->x == room.x && (curRoom->y+1) == room.y) result = (Directions)(result | DIR_DOWN);
+    if (curRoom->exits & DIR_RIGHT && (curRoom->x+1) == room.x && curRoom->y == room.y) result = (Directions)(result | DIR_LEFT);
+    if (curRoom->exits & DIR_LEFT && (curRoom->x-1) == room.x && curRoom->y == room.y) result = (Directions)(result | DIR_RIGHT);
 //    qDebug() << "UP:" << (curRoom.exits & DIR_DOWN) << (curRoom.x == room.x) << ((curRoom.y-1) == room.y) << (curRoom.exits & DIR_DOWN && curRoom.x == room.x && (curRoom.y-1) == room.y);
 //    qDebug() << "DOWN:" << (curRoom.exits & DIR_UP) << (curRoom.x == room.x) << ((curRoom.y+1) == room.y) << (curRoom.exits & DIR_UP && curRoom.x == room.x && (curRoom.y+1) == room.y);
 //    qDebug() << "LEFT:" << (curRoom.exits & DIR_RIGHT) << ((curRoom.x+1) == room.x) << (curRoom.y == room.y) << (curRoom.exits & DIR_RIGHT && (curRoom.x+1) == room.x && curRoom.y == room.y);
@@ -229,11 +239,11 @@ Directions TRoomsGenerator::GetRejectNeighborNoExits(Room room) const
   
   for (it = m_rooms.begin(); it != m_rooms.end(); it++)
   {
-    const Room &curRoom = *it;
-    if ((curRoom.exits & DIR_DOWN) == 0 && curRoom.x == room.x && (curRoom.y-1) == room.y) result = (Directions)(result & ~DIR_UP);
-    if ((curRoom.exits & DIR_UP) == 0 && curRoom.x == room.x && (curRoom.y+1) == room.y) result = (Directions)(result & ~DIR_DOWN);
-    if ((curRoom.exits & DIR_RIGHT) == 0 && (curRoom.x+1) == room.x && curRoom.y == room.y) result = (Directions)(result & ~DIR_LEFT);
-    if ((curRoom.exits & DIR_LEFT) == 0 && (curRoom.x-1) == room.x && curRoom.y == room.y) result = (Directions)(result & ~DIR_RIGHT);
+    const Room *curRoom = *it;
+    if ((curRoom->exits & DIR_DOWN) == 0 && curRoom->x == room.x && (curRoom->y-1) == room.y) result = (Directions)(result & ~DIR_UP);
+    if ((curRoom->exits & DIR_UP) == 0 && curRoom->x == room.x && (curRoom->y+1) == room.y) result = (Directions)(result & ~DIR_DOWN);
+    if ((curRoom->exits & DIR_RIGHT) == 0 && (curRoom->x+1) == room.x && curRoom->y == room.y) result = (Directions)(result & ~DIR_LEFT);
+    if ((curRoom->exits & DIR_LEFT) == 0 && (curRoom->x-1) == room.x && curRoom->y == room.y) result = (Directions)(result & ~DIR_RIGHT);
     //    qDebug() << "UP:" << ((curRoom.exits & DIR_DOWN) == 0 && curRoom.x == room.x && (curRoom.y-1) == room.y) << ((curRoom.exits & DIR_DOWN) == 0 && curRoom.x == room.x && (curRoom.y-1) == room.y);
     //    qDebug() << "DOWN:" << ((curRoom.exits & DIR_UP) == 0 && curRoom.x == room.x && (curRoom.y+1) == room.y) << ((curRoom.exits & DIR_UP) == 0 && curRoom.x == room.x && (curRoom.y+1) == room.y);
     //    qDebug() << "LEFT:" << ((curRoom.exits & DIR_RIGHT) == 0 && (curRoom.x+1) == room.x && curRoom.y == room.y) << ((curRoom.exits & DIR_RIGHT) == 0 && (curRoom.x+1) == room.x && curRoom.y == room.y);
@@ -252,6 +262,41 @@ Directions TRoomsGenerator::GetRejectNeighborNoExits(Room room) const
   return result;
 }
 
+/*Room &TRoomsGenerator::GetNeighborRooms(Room &room)
+{
+  QElapsedTimer time;
+  time.start();
+#define FUNC_NAME "GetNeighborRooms"
+  RoomList::iterator it;
+  //  const RoomList::iterator left = list.end(), right = list.end(), down = list.end(), up = list.end();
+
+  //  qDebug() << "GetNeighborRejectExits: " << result;
+
+  for (it = m_rooms.begin(); it != m_rooms.end(); it++)
+  {
+    Room &curRoom = *it;
+    if (curRoom.x == room.x && (curRoom.y-1) == room.y) { room.up = &curRoom;
+    if (curRoom.x == room.x && (curRoom.y+1) == room.y)
+    if ((curRoom.x+1) == room.x && curRoom.y == room.y)
+    if ((curRoom.x-1) == room.x && curRoom.y == room.y)
+    //    qDebug() << "UP:" << ((curRoom.exits & DIR_DOWN) == 0 && curRoom.x == room.x && (curRoom.y-1) == room.y) << ((curRoom.exits & DIR_DOWN) == 0 && curRoom.x == room.x && (curRoom.y-1) == room.y);
+    //    qDebug() << "DOWN:" << ((curRoom.exits & DIR_UP) == 0 && curRoom.x == room.x && (curRoom.y+1) == room.y) << ((curRoom.exits & DIR_UP) == 0 && curRoom.x == room.x && (curRoom.y+1) == room.y);
+    //    qDebug() << "LEFT:" << ((curRoom.exits & DIR_RIGHT) == 0 && (curRoom.x+1) == room.x && curRoom.y == room.y) << ((curRoom.exits & DIR_RIGHT) == 0 && (curRoom.x+1) == room.x && curRoom.y == room.y);
+    //    qDebug() << "RIGHT:" << ((curRoom.exits & DIR_LEFT) == 0 && (curRoom.x-1) == room.x && curRoom.y == room.y) << ((curRoom.exits & DIR_LEFT) == 0 && (curRoom.x-1) == room.x && curRoom.y == room.y);
+    //    qDebug() << curRoom << result;
+  }
+
+  //  qDebug() << "GetNeighborRejectExits: " << result;
+
+  if (time.elapsed() > 0)
+  {
+    qDebug() << FUNC_NAME << time.elapsed();
+  }
+#undef FUNC_NAME
+
+  return result;
+}*/
+
 
 
 bool TRoomsGenerator::IsFreePlace() const
@@ -263,8 +308,8 @@ bool TRoomsGenerator::IsFreePlace() const
   
   for (it = m_rooms.begin(); it != m_rooms.end(); it++)
   {
-    const Room &curRoom = *it;
-    if (curRoom.x == m_curRoom.x && curRoom.y == m_curRoom.y) 
+    const Room *curRoom = *it;
+    if (curRoom->x == m_curRoom->x && curRoom->y == m_curRoom->y)
     {
       if (time.elapsed() > 0)
       {
@@ -294,11 +339,11 @@ QList<Tag> TRoomsGenerator::GetNearestRoomTags(const Room &room, const RoomList 
   
   for (it = list.begin(); it != list.end(); it++)
   {
-    const Room &curRoom = *it;
-    if (curRoom.exits & DIR_DOWN && curRoom.x == room.x && (curRoom.y-1) == room.y) result.push_back(curRoom.roomType);
-    if (curRoom.exits & DIR_UP && curRoom.x == room.x && (curRoom.y+1) == room.y) result.push_back(curRoom.roomType);
-    if (curRoom.exits & DIR_RIGHT && (curRoom.x+1) == room.x && curRoom.y == room.y) result.push_back(curRoom.roomType);
-    if (curRoom.exits & DIR_LEFT && (curRoom.x-1) == room.x && curRoom.y == room.y) result.push_back(curRoom.roomType);
+    const Room *curRoom = *it;
+    if (curRoom->exits & DIR_DOWN && curRoom->x == room.x && (curRoom->y-1) == room.y) result.push_back(curRoom->roomType);
+    if (curRoom->exits & DIR_UP && curRoom->x == room.x && (curRoom->y+1) == room.y) result.push_back(curRoom->roomType);
+    if (curRoom->exits & DIR_RIGHT && (curRoom->x+1) == room.x && curRoom->y == room.y) result.push_back(curRoom->roomType);
+    if (curRoom->exits & DIR_LEFT && (curRoom->x-1) == room.x && curRoom->y == room.y) result.push_back(curRoom->roomType);
   }
   
   if (time.elapsed() > 0)
@@ -378,20 +423,22 @@ RoomList TRoomsGenerator::DrawLabirint(MapObjAlgList objList, int count)
   time.start();
   #define FUNC_NAME "DrawLabirint"
   
-  m_curRoom.x = 0;
-  m_curRoom.y = 0;
+  m_curRoom = new Room();
+
+  m_curRoom->x = 0;
+  m_curRoom->y = 0;
 //  m_curRoom.roomType = 0; //Вход всегда первый.
-  m_curRoom.roomType = 3; //Пока все будут ситуациями рандом позже.
-  m_curRoom.index = 0;
+  m_curRoom->roomType = 3; //Пока все будут ситуациями рандом позже.
+  m_curRoom->index = 0;
   
-  m_curRoom.exits = GetRandomExits(GetRandomExitCount(0, count, ExitCount(DIR_NO)), DIR_NO);
+  m_curRoom->exits = GetRandomExits(GetRandomExitCount(0, count, ExitCount(DIR_NO)), DIR_NO);
   
 //  qDebug() << "One:" << newRoom;
   
   m_rooms.push_back(m_curRoom);
-  objList[m_curRoom.roomType].havingCount++;
+  objList[m_curRoom->roomType].havingCount++;
   
-  QStack<Room> unfinishedRooms;
+  QStack<const Room*> unfinishedRooms;
   unfinishedRooms.push(m_curRoom);
   
   
@@ -401,9 +448,9 @@ RoomList TRoomsGenerator::DrawLabirint(MapObjAlgList objList, int count)
     time2.start();
     #define FUNC_NAME2 "DrawLabirint OneRoom"
   
-    Room oldRoom = unfinishedRooms.pop();
+    const Room *oldRoom = unfinishedRooms.pop();
   
-    Directions oldFreeExist = GetFreeExits(oldRoom);
+    Directions oldFreeExist = GetFreeExits(*oldRoom);
     
     if (oldFreeExist & ~DIR_ALL) 
     {
@@ -413,28 +460,31 @@ RoomList TRoomsGenerator::DrawLabirint(MapObjAlgList objList, int count)
   
     if (oldFreeExist != DIR_NO)
     {
-      m_curRoom = FillNextRoomCoordinate(oldRoom, GetFreeExits(oldRoom));
-      m_curRoom.roomType = 3; //Пока все будут ситуациями рандом позже.
-//      m_curRoom.roomType = GetRandomRoomType(GetObjListForRoom(objList, m_curRoom, m_rooms));
-//      qDebug() << newRoom << "re" << newRoom.exits << "GNE" << GetNeighborExits(newRoom, result) << "GNRE" << GetRejectNeighborNoExits(newRoom, result);
-      m_curRoom.exits = (Directions)(m_curRoom.exits | GetNeighborExits());
-      m_curRoom.exits = GetRandomExits(GetRandomExitCount(m_rooms.count(), count, ExitCount(m_curRoom.exits)), m_curRoom.exits);
-      m_curRoom.exits = GetRejectNeighborNoExits();
+      m_curRoom = new Room(*oldRoom);
+      FillNextRoomCoordinate(GetFreeExits(*oldRoom), m_curRoom);
+      m_curRoom->roomType = 3; //Пока все будут ситуациями рандом позже.
+      m_curRoom->exits = (Directions)(m_curRoom->exits | GetNeighborExits(*m_curRoom));
+      m_curRoom->exits = GetRandomExits(GetRandomExitCount(m_rooms.count(), count, ExitCount(m_curRoom->exits)), m_curRoom->exits);
+      m_curRoom->exits = GetRejectNeighborNoExits(*m_curRoom);
 //      qDebug() << "GNRE2" << GetRejectNeighborNoExits(newRoom, result);
 //      qDebug() << "Two:" << newRoom;
       
       if (IsFreePlace())
       {
-        m_curRoom.index = oldRoom.index + 1;
+        m_curRoom->index = oldRoom->index + 1;
         m_rooms.push_back(m_curRoom);
-        objList[m_curRoom.roomType].havingCount++;
-        if (GetFreeExits(m_curRoom) != DIR_NO) unfinishedRooms.push(m_curRoom);
+//        objList[m_curRoom->roomType].havingCount++;
+        if (GetFreeExits(*m_curRoom) != DIR_NO) unfinishedRooms.push(m_curRoom);
 //        qDebug() << "Accepted\r\n-------------------\r\n";
 //        debugPointer->DrawRooms(result);
 //        QMessageBox::information(0, "Accepted", "Accepted");
       }
+      else
+      {
+        delete m_curRoom;
+      }
       
-      oldFreeExist = GetFreeExits(oldRoom);
+      oldFreeExist = GetFreeExits(*oldRoom);
 //      qDebug() << "en" << oldFreeExist << (int)oldFreeExist;
       if (oldFreeExist & ~DIR_ALL)
       {

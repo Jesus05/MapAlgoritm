@@ -217,9 +217,9 @@ void PrintAllRoomNeighborTags(const RoomList &rooms)
   RoomList::const_iterator it;
     for (it = rooms.begin(); it != rooms.end(); it++)
   {
-    const Room &room = *it;
-    const QList<Tag> &temp = TRoomsGenerator::GetNearestRoomTags(room, rooms);
-    const MapObjAlgList &temp2 = TRoomsGenerator::GetObjListForRoom(GetList(), room, rooms);
+    const Room *room = *it;
+    const QList<Tag> &temp = TRoomsGenerator::GetNearestRoomTags(*room, rooms);
+    const MapObjAlgList &temp2 = TRoomsGenerator::GetObjListForRoom(GetList(), *room, rooms);
     qDebug() << "TagList: " << room << temp << temp2;
   }
 }
@@ -271,19 +271,19 @@ void MainWindow::DrawRooms(const RoomList &rooms)
   
   for (it = rooms.begin(); it != rooms.end(); it++)
   {
-    const Room &room = *it;
-    const int lminx = room.x * 20, lminy = -room.y * 20, lmaxx = (room.x+1) * 20, lmaxy = (-room.y+1) * 20;
-    ui->graphicsView->scene()->addRect(lminx + 5, lminy + 5, 10, 10, QPen(), QBrush(GetColorByTag(room.roomType)));
-    ui->graphicsView->scene()->addText(QString::number(room.index), QFont("Small Font", 7))->setPos(lminx + 2,lminy);
+    const Room *room = *it;
+    const int lminx = room->x * 20, lminy = -room->y * 20, lmaxx = (room->x+1) * 20, lmaxy = (-room->y+1) * 20;
+    ui->graphicsView->scene()->addRect(lminx + 5, lminy + 5, 10, 10, QPen(), QBrush(GetColorByTag(room->roomType)));
+    ui->graphicsView->scene()->addText(QString::number(room->index), QFont("Small Font", 5))->setPos(lminx + 2,lminy);
     m_minX = qMin(m_minX, lminx);
     m_minY = qMin(m_minY, lminy);
     m_maxX = qMax(m_maxX, lmaxx);
     m_maxY = qMax(m_maxY, lmaxy);
     
-    if (room.exits & DIR_LEFT) ui->graphicsView->scene()->addLine(lminx, lminy + 10, lminx + 5, lminy + 10);
-    if (room.exits & DIR_UP) ui->graphicsView->scene()->addLine(lminx + 10, lminy, lminx + 10, lminy + 5);
-    if (room.exits & DIR_DOWN) ui->graphicsView->scene()->addLine(lminx + 10, lminy + 20, lminx + 10, lminy + 15);
-    if (room.exits & DIR_RIGHT) ui->graphicsView->scene()->addLine(lminx + 20, lminy + 10, lminx + 15, lminy + 10);
+    if (room->exits & DIR_LEFT) ui->graphicsView->scene()->addLine(lminx, lminy + 10, lminx + 5, lminy + 10);
+    if (room->exits & DIR_UP) ui->graphicsView->scene()->addLine(lminx + 10, lminy, lminx + 10, lminy + 5);
+    if (room->exits & DIR_DOWN) ui->graphicsView->scene()->addLine(lminx + 10, lminy + 20, lminx + 10, lminy + 15);
+    if (room->exits & DIR_RIGHT) ui->graphicsView->scene()->addLine(lminx + 20, lminy + 10, lminx + 15, lminy + 10);
     
 //    qDebug() << "minX:" << minX << "minY:" << minY << "maxX" << maxX << "maxY" << maxY;
   }

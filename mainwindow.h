@@ -2,13 +2,11 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QList>
+#include "Types.h"
 
 namespace Ui {
 class MainWindow;
 }
-
-typedef QList<class Room> RoomList;
 
 class MainWindow : public QMainWindow
 {
