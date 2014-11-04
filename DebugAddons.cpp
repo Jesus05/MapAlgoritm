@@ -63,6 +63,11 @@ QDebug operator<<(QDebug debug, const Room &obj)
   debug << "y:" << obj.y;
   debug << "type:" << obj.roomType;
   debug << "exits:" << obj.exits;
+  debug << "index:" << obj.index;
+  debug << "left:" << obj.left;
+  debug << "right:" << obj.right;
+  debug << "up:" << obj.up;
+  debug << "down:" << obj.down;
   debug << "#";
   debug.setAutoInsertSpaces(oldSetting);
   return debug.maybeSpace();

@@ -1,5 +1,6 @@
 #include "troomsgenerator.h"
 #include "trandomizer.h"
+#include "DebugAddons.h"
 #include <QElapsedTimer>
 #include <QDebug>
 #include <QStack>
@@ -29,7 +30,7 @@ int TRoomsGenerator::GetRandomExitCount(int havingRooms, int needRooms, int Havi
   int min = HavingExit + 1;
   int max = 3;
 
-  double randPos = (double)rand / RAND_MAX;
+  double randPos = (double)rand / (RAND_MAX + 1);
   double roomPos = (double)havingRooms / needRooms;
   double roomCutMin = 0.8;
   double roomCutMax = 1.0;
@@ -39,6 +40,9 @@ int TRoomsGenerator::GetRandomExitCount(int havingRooms, int needRooms, int Havi
   int result = max - (int)((double)(max - min + 1) * resultPos);
 
 //  qDebug() << "RandomExitCount:" << havingRooms << needRooms << resultPos << randPos << roomPos << (double)(max - min + 1) * resultPos << (int)((double)(max - min + 1) * resultPos) << result;
+
+//  result = qMin(result, max);
+//  result = qMax(result, min);
 
   return result;
 }
@@ -55,11 +59,11 @@ int TRoomsGenerator::ExitCount(Directions exits)
   return having;
 }
 
-Directions TRoomsGenerator::SplitExits(Directions exits[])
+Directions TRoomsGenerator::SplitExits(Directions exits[MAX_EXIT_COUNT])
 {
   Directions splitExits = DIR_NO;
 
-  for (int i = 0; i < 4; i++)
+  for (int i = 0; i < MAX_EXIT_COUNT; i++)
   {
     splitExits = (Directions)(splitExits | exits[i]);
   }
@@ -67,14 +71,14 @@ Directions TRoomsGenerator::SplitExits(Directions exits[])
   return splitExits;
 }
 
-int  TRoomsGenerator::ExitCount(Directions exits[4])
+int  TRoomsGenerator::ExitCount(Directions exits[MAX_EXIT_COUNT])
 {
   return ExitCount(SplitExits(exits));
 }
 
 Directions TRoomsGenerator::SelectRandDirection(Directions having)
 {
-  Directions randomExits[4] = {DIR_NO, DIR_NO, DIR_NO, DIR_NO};
+  Directions randomExits[MAX_EXIT_COUNT] = {DIR_NO, DIR_NO, DIR_NO, DIR_NO};
   int randomIndex = 0;
 
   #define ADD_DIR(dir) if (having & dir) randomExits[randomIndex++] = dir;
@@ -101,18 +105,24 @@ Directions TRoomsGenerator::GetRandomExits(int exitCount, Directions having)
 {
   //  qDebug() << "having" << having;
 
+//  if (having & ~DIR_ALL)
+//  {
+//    qDebug() << "GetRandomExits having" << having << (int)having;
+//    qFatal("stFatal");
+//  }
+
     if (ExitCount(having) >= exitCount) //Если все ходы уже есть то возвращаем все ходы.
     {
   //    qDebug() << "GetRandomExit";
       return having;
     }
 
-    if (exitCount > 4) //Максимально может быть 4 выхода, если запросили больше ошибка.
+    if (exitCount > MAX_EXIT_COUNT) //Максимально может быть MAX_EXIT_COUNT выхода, если запросили больше ошибка.
     {
       return DIR_NO;
     }
 
-    Directions randomExits[4] = {DIR_NO, DIR_NO, DIR_NO, DIR_NO};
+    Directions randomExits[MAX_EXIT_COUNT] = {DIR_NO, DIR_NO, DIR_NO, DIR_NO};
     int randomIndex = 0;
     {  /* Корридорность - предпочтительный выход напротив входа */
       if (having & DIR_UP && !(having & DIR_DOWN)) randomExits[randomIndex++] = DIR_DOWN;
@@ -120,6 +130,7 @@ Directions TRoomsGenerator::GetRandomExits(int exitCount, Directions having)
       if (having & DIR_LEFT && !(having & DIR_RIGHT)) randomExits[randomIndex++] = DIR_RIGHT;
       if (having & DIR_RIGHT && !(having & DIR_LEFT)) randomExits[randomIndex++] = DIR_LEFT;
     }
+
     Directions selected = SplitExits(randomExits);
 
     #define ADD_DIR(dir) if (!(selected & dir) && !(having & dir)) randomExits[randomIndex++] = dir;
@@ -132,14 +143,28 @@ Directions TRoomsGenerator::GetRandomExits(int exitCount, Directions having)
     #undef ADD_DIR
 
     Directions result = having;
+
+//    if (result & ~DIR_ALL)
+//    {
+//      qDebug() << "GetRandomExits result1" << result << (int)result;
+//      qFatal("stFatal");
+//    }
+
+
   //  qDebug() << "result" << result;
 
     while (ExitCount(result) < exitCount)
     {
       randomIndex = TRandomizer::GetRandom(0, 3);
       if (qrand() % 2) result = (Directions)(result | randomExits[randomIndex]);
-  //    qDebug() << "result loop" << result << randomIndex << randomExits[randomIndex];
+//      qDebug() << "result loop" << randomIndex;
     }
+
+//    if (result & ~DIR_ALL)
+//    {
+//      qDebug() << "GetRandomExits result2" << result << (int)result;
+//      qFatal("stFatal");
+//    }
 
     return result;
 }
@@ -455,6 +480,7 @@ RoomList TRoomsGenerator::DrawLabirint(MapObjAlgList objList, int count)
     if (oldFreeExist & ~DIR_ALL) 
     {
       qDebug() << "st" << oldFreeExist << (int)oldFreeExist;
+      qDebug() << (*oldRoom);
       qFatal("stFatal");
     }
   
@@ -462,10 +488,34 @@ RoomList TRoomsGenerator::DrawLabirint(MapObjAlgList objList, int count)
     {
       m_curRoom = new Room(*oldRoom);
       FillNextRoomCoordinate(GetFreeExits(*oldRoom), m_curRoom);
+      if (m_curRoom->exits & ~DIR_ALL)
+      {
+        qDebug() << "st111" << m_curRoom->exits << (int)m_curRoom->exits;
+        qDebug() << (*m_curRoom);
+        qFatal("stFatal");
+      }
       m_curRoom->roomType = 3; //Пока все будут ситуациями рандом позже.
       m_curRoom->exits = (Directions)(m_curRoom->exits | GetNeighborExits(*m_curRoom));
+      if (m_curRoom->exits & ~DIR_ALL)
+      {
+        qDebug() << "st222" << m_curRoom->exits << (int)m_curRoom->exits;
+        qDebug() << (*m_curRoom);
+        qFatal("stFatal");
+      }
       m_curRoom->exits = GetRandomExits(GetRandomExitCount(m_rooms.count(), count, ExitCount(m_curRoom->exits)), m_curRoom->exits);
+      if (m_curRoom->exits & ~DIR_ALL)
+      {
+        qDebug() << "st333" << m_curRoom->exits << (int)m_curRoom->exits;
+        qDebug() << (*m_curRoom);
+        qFatal("stFatal");
+      }
       m_curRoom->exits = GetRejectNeighborNoExits(*m_curRoom);
+      if (m_curRoom->exits & ~DIR_ALL)
+      {
+        qDebug() << "st444" << m_curRoom->exits << (int)m_curRoom->exits;
+        qDebug() << (*m_curRoom);
+        qFatal("stFatal");
+      }
 //      qDebug() << "GNRE2" << GetRejectNeighborNoExits(newRoom, result);
 //      qDebug() << "Two:" << newRoom;
       

@@ -180,9 +180,25 @@ void TestThree()
 
 }
 
+void TestFifth()
+{
+
+  for (int i = 0; i <= RAND_MAX; i++)
+  {
+    int rand = i;
+//    if (rand == 0) qDebug() << "null";
+//    if (rand == RAND_MAX) qDebug() << "randMax";
+//    int rand = TRandomizer::GetRandomTest(0, 3, i);
+    if (rand < 0) qDebug() << "down" << rand << i;
+    if (rand > 3) qDebug() << "up" << rand << i;
+  }
+
+}
+
 void MainWindow::on_pushButton_clicked()
 {
   TestFour();
+//  TestFifth();
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)

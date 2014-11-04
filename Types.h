@@ -6,6 +6,7 @@
 typedef int Tag;
 
 const int EndArraySize = 256;
+const int MAX_EXIT_COUNT = 4;
 
 typedef int EndArray[EndArraySize];
 
